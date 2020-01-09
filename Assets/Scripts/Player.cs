@@ -14,7 +14,7 @@ public class Player : MonoBehaviour {
     void Awake () {
         moveX = 0; moveY = 0; moving = false; movingLastFrame = false; loaded = true;
         xSpeed = 0; ySpeed = 0;
-        moveSpeed = 30f;
+        moveSpeed = 10f;
         shootSpeed = 0; rotateSpeed = 0; maxRotateSpeed = 300;
         moveAngle = 0; hookAngle = 0;
         swingMomentum = 0;
@@ -35,7 +35,8 @@ public class Player : MonoBehaviour {
         float hookAngleIn360 = (hookAngle + 360) % 360;
         float eulersZ = anchor.transform.localRotation.eulerAngles.z;
         float eulersIn360 = (eulersZ + 360) % 360;
-        float rotationAccelerationDirection = ((hookAngleIn360 - eulersIn360 + 360) % 360 < 180) ? 1 : -1; //TODO: understand this better
+        float angleDiff = (hookAngleIn360 - eulersIn360 + 360) % 360;
+        float rotationAccelerationDirection = (angleDiff < 180) ? 1 : -1; //TODO: understand this better
 
         if (moving)
         {
@@ -43,16 +44,26 @@ public class Player : MonoBehaviour {
             movingLastFrame = true;
             //swingMomentum = Mathf.Min(30, swingMomentum + Mathf.Abs(rotateSpeed)/1000);
             swingMomentum = Mathf.Abs(rotateSpeed)/30-3.5f;
-            if (Mathf.Abs(hookAngleIn360 - eulersIn360) > 5)
-            {
-                rotateSpeed += Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 2f) * rotationAccelerationDirection;
+
+            rotateSpeed += Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 3.5f) * rotationAccelerationDirection;
+
+            float diff = (hookAngle - eulersZ + 180) % 360 - 180;
+            diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
+            //TODO: understand this better
+
+            if (diff < 90 && swingMomentum < 12) {
+                if (Mathf.Sign(rotateSpeed) == Mathf.Sign(rotationAccelerationDirection))
+                {
+                    //Debug.Log("activating 1!" + swingMomentum);
+                    rotateSpeed -= ((angleDiff < 15) ? rotateSpeed / 8 : ((angleDiff < 40) ? (rotateSpeed) / 30 : (rotateSpeed) / 40)) + Mathf.Sign(rotateSpeed) * ((swingMomentum > 5) ? 2 : 0);
+                }
+                else
+                {
+                    //Debug.Log("activating2!");
+                    rotateSpeed -= ((angleDiff < 15) ? rotateSpeed / 3 : ((angleDiff < 40) ? (rotateSpeed) / 15 : (rotateSpeed) / 20)) + Mathf.Sign(rotateSpeed) * ((swingMomentum > 5) ? 4 : 0);
+                }
             }
-            else
-            {
-                //CURRENTLY WRONG! THIS SHOULD DAMPEN SPEED WHEN APPROACHING INTENDED ANGLE, AT LEAST THAT'S THE INTENTION
-                rotateSpeed = Mathf.Sign(rotateSpeed)*Mathf.Max(Mathf.Abs(Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 4f) * rotationAccelerationDirection), 0);
-            }
-            Debug.Log(swingMomentum);
+            Debug.Log(diff);
         }
         else
         {
@@ -63,7 +74,7 @@ public class Player : MonoBehaviour {
             float slowDownAmount = 0.2f*(Mathf.Pow(0.01f,-0.6f+0.03f*Mathf.Abs(swingMomentum))+2);
             rotateSpeed = Mathf.Sign(rotateSpeed) * Mathf.Max(Mathf.Abs(rotateSpeed) - slowDownAmount, 0);//slowDownCap);
             swingMomentum -= 5*Time.deltaTime;
-            Debug.Log(swingMomentum);
+            //Debug.Log(swingMomentum);
         }
         anchor.transform.localRotation = Quaternion.Euler(0, 0, eulersZ + rotateSpeed * Time.deltaTime);
 
