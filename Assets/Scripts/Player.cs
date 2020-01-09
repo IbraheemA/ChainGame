@@ -43,8 +43,15 @@ public class Player : MonoBehaviour {
             movingLastFrame = true;
             //swingMomentum = Mathf.Min(30, swingMomentum + Mathf.Abs(rotateSpeed)/1000);
             swingMomentum = Mathf.Abs(rotateSpeed)/30-3.5f;
-            rotateSpeed += Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 2f) * rotationAccelerationDirection;//*(Mathf.Abs(hookAngleIn360-eulersIn360)/100);
-            
+            if (Mathf.Abs(hookAngleIn360 - eulersIn360) > 5)
+            {
+                rotateSpeed += Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 2f) * rotationAccelerationDirection;
+            }
+            else
+            {
+                //CURRENTLY WRONG! THIS SHOULD DAMPEN SPEED WHEN APPROACHING INTENDED ANGLE, AT LEAST THAT'S THE INTENTION
+                rotateSpeed = Mathf.Sign(rotateSpeed)*Mathf.Max(Mathf.Abs(Mathf.Min(Mathf.Abs(rotateSpeed) / 10 + 1, 4f) * rotationAccelerationDirection), 0);
+            }
             Debug.Log(swingMomentum);
         }
         else
