@@ -12,12 +12,12 @@ public class Player : MonoBehaviour {
     private GameObject hook, anchor;
 
     void Awake () {
-        moveX = 0; moveY = 0; moving = false; movingLastFrame = false; loaded = true; pathSet = false;
+        moveX = 0; moveY = 0; moving = false; movingLastFrame = false; loaded = true; pathSet = true;
         xSpeed = 0; ySpeed = 0;
         moveSpeed = 10f;
         shootSpeed = 0; lastMoveAngle = 0;
         moveAngle = 0; hookAngle = 0;
-        initialAngle = 0; finalAngle = 0;
+        initialAngle = 180; finalAngle = 180;
         swingMomentum = 0; rotateTarget = 0;
         //TODO: Possibly make anchor and hook finding nicer?
         anchor = transform.GetChild(0).gameObject;
