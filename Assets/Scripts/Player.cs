@@ -15,7 +15,7 @@ public class Player : MonoBehaviour {
         moveX = 0; moveY = 0; moving = false; movingLastFrame = false; loaded = true; pathSet = false;
         xSpeed = 0; ySpeed = 0;
         moveSpeed = 10f;
-        shootSpeed = 0; rotateSpeed = 0; maxRotateSpeed = 300; lastMoveAngle = 0;
+        shootSpeed = 0; lastMoveAngle = 0;
         moveAngle = 0; hookAngle = 0;
         initialAngle = 0; finalAngle = 0;
         swingMomentum = 0; rotateTarget = 0;
@@ -29,8 +29,6 @@ public class Player : MonoBehaviour {
         moveY = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
         moving = moveX != 0 || moveY != 0;
         float speedMod = (moveX != 0 && moveY != 0) ? 1 / Mathf.Sqrt(2) : 1;
-
-        //Debug.Log("angle: " + moveAngle + " last: " + lastMoveAngle);
         
         float hookAngleIn360 = (hookAngle + 360) % 360;
         float eulersZ = anchor.transform.localRotation.eulerAngles.z;
@@ -49,9 +47,6 @@ public class Player : MonoBehaviour {
         float diff = (hookAngle - eulersZ + 180) % 360 - 180;
         diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
 
-
-
-        //Debug.Log(diff);
         if (!pathSet)
         {
             if (diff == 0)
@@ -68,21 +63,12 @@ public class Player : MonoBehaviour {
         }
         else
         {
-            rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.5f);
+            rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.4f);
             if(rotationPercentage == 1) { pathSet = false; }
         }
         rotateTarget = Mathf.LerpAngle(initialAngle, finalAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
         anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
-        
-        //TEMP
-        /*
-        if (moving)
-        {
-            moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY));
-            hookAngle = moveAngle - Mathf.Sign(moveAngle) * 180;
-        }
-        anchor.transform.localRotation = Quaternion.Euler(0, 0, hookAngle);
-        */
+
         if (Input.GetKey("space"))
         {
             if (loaded)
