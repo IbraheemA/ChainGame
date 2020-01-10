@@ -7,7 +7,7 @@ public class Player : MonoBehaviour {
     private int moveX, moveY;
     private bool moving, loaded, pathSet, movingLastFrame;
     private float xSpeed, ySpeed, moveSpeed, shootSpeed, rotateSpeed, maxRotateSpeed;
-    private float swingMomentum, sinShift, sinStretch, swingDistance;
+    private float swingMomentum, initialAngle, finalAngle, rotateTarget, rotationPercentage;
     private float moveAngle, hookAngle, lastMoveAngle;
     private GameObject hook, anchor;
 
@@ -17,8 +17,8 @@ public class Player : MonoBehaviour {
         moveSpeed = 10f;
         shootSpeed = 0; rotateSpeed = 0; maxRotateSpeed = 300; lastMoveAngle = 0;
         moveAngle = 0; hookAngle = 0;
-        sinShift = 0; sinStretch = 0; swingDistance = 0;
-        swingMomentum = 0;
+        initialAngle = 0; finalAngle = 0;
+        swingMomentum = 0; rotateTarget = 0;
         //TODO: Possibly make anchor and hook finding nicer?
         anchor = transform.GetChild(0).gameObject;
         hook = anchor.transform.GetChild(0).gameObject;
@@ -38,77 +38,41 @@ public class Player : MonoBehaviour {
         float angleDiff = (hookAngleIn360 - eulersIn360 + 360) % 360;
         float rotationTargetDirection = (angleDiff < 180) ? 1 : -1; //TODO: understand this better
 
-        //PUT ON THE BURNER FOR NOW
+        if (moveX != 0 || moveY != 0) { moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY)); }
+        if (moveAngle != lastMoveAngle) { pathSet = false; }
+        lastMoveAngle = moveAngle;
+        hookAngle = moveAngle - Mathf.Sign(moveAngle) * 180;
+        if (!movingLastFrame) { swingMomentum = Mathf.Max(swingMomentum, 0); }
+        movingLastFrame = true;
 
-        if (moving)
+        //TODO: understand this better
+        float diff = (hookAngle - eulersZ + 180) % 360 - 180;
+        diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
+
+
+
+        //Debug.Log(diff);
+        if (!pathSet)
         {
-            if (moveAngle != lastMoveAngle) { pathSet = false; }
-            moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY));
-            lastMoveAngle = moveAngle;
-            hookAngle = moveAngle - Mathf.Sign(moveAngle) * 180;
-            if (!movingLastFrame) { swingMomentum = Mathf.Max(swingMomentum, 0); }
-            movingLastFrame = true;
-
-            //TODO: understand this better
-            float diff = (hookAngle - eulersZ + 180) % 360 - 180;
-            diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
-
-            //Debug.Log(diff);
-            if (!pathSet)
+            if (diff == 0)
             {
-                if (diff == 0)
-                {
-                    lastMoveAngle = moveAngle;
-                }
-                else
-                {
-                    pathSet = true;
-                    if (Mathf.Abs(rotateSpeed) < 5)
-                    {
-                        sinShift = Mathf.Min(0.3f,0.01f*diff);
-                    }
-                    else
-                    {
-                        //BROKEN DECELERATION; PERHAPS FIX LATER
-                        //sinShift = Mathf.Asin(((Mathf.Sign(rotateSpeed) == rotationTargetDirection) ? 1 : -1) * Mathf.Abs(rotateSpeed));
-
-                        //replacement; also need to fix, but less fundamentally broken
-                        if (Mathf.Sign(rotateSpeed) == rotationTargetDirection)
-                        {
-                            sinShift = Mathf.Asin(Mathf.Abs(rotateSpeed));
-                        }
-                        else
-                        {
-                            sinShift = Mathf.Min(0.3f, 0.01f * diff);
-                        }
-                    }
-
-                    swingDistance = diff;
-                    sinStretch = (Mathf.PI - sinShift) / swingDistance;
-
-                    //need to fix
-                    sinStretch *= rotationTargetDirection;
-                    sinShift *= rotationTargetDirection;
-
-                    Debug.Log("activate! sinShift: " + sinShift + " sinStretch: " + sinStretch);
-                }
+                lastMoveAngle = moveAngle;
             }
-            rotateSpeed = Mathf.Sin(sinStretch * (swingDistance - diff) + sinShift);
-
-            Debug.Log("rotateSpeed: " + rotateSpeed + " swingDistance: " + swingDistance+ " sD - diff: " + (swingDistance - diff));
+            else
+            {
+                pathSet = true;
+                initialAngle = eulersZ;
+                finalAngle = hookAngle;
+                rotationPercentage = 0;
+            }
         }
         else
         {
-            pathSet = false;
-            movingLastFrame = false;
-            float slowDownAmount = 0.2f*(Mathf.Pow(0.01f,-0.8f+0.03f*Mathf.Abs(swingMomentum))+2);
-            rotateSpeed = Mathf.Sign(rotateSpeed) * Mathf.Max(Mathf.Abs(rotateSpeed) - slowDownAmount, 0);//slowDownCap);
-            swingMomentum -= 5*Time.deltaTime;
-            //Debug.Log(swingMomentum);
+            rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.5f);
+            if(rotationPercentage == 1) { pathSet = false; }
         }
-
-        swingMomentum = Mathf.Min(Mathf.Abs(rotateSpeed) / 30 - 3.5f, 100);
-        anchor.transform.localRotation = Quaternion.Euler(0, 0, eulersZ + rotateSpeed* maxRotateSpeed * Time.deltaTime);
+        rotateTarget = Mathf.LerpAngle(initialAngle, finalAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
+        anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
         
         //TEMP
         /*
