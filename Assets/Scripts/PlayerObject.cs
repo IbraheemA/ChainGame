@@ -7,22 +7,22 @@ public class PlayerObject : MonoBehaviour {
 
     private int moveX, moveY;
     private bool moving, movingLastFrame;
-    private float xSpeed, ySpeed, moveSpeed, shootSpeed;
+    private float xSpeed, ySpeed, moveSpeed;
+    public float shootSpeed;
     private float initialAngle, targetAngle, rotateTarget, rotationPercentage;
     private float moveAngle, hookAngle, lastMoveAngle;
     private float loadTimer;
-    private hState hookState;
-    private GameObject hook, anchor;
+    public hState hookState;
+    public GameObject hook, anchor;
     public Player player;
 
-    enum hState
+    public enum hState
     {
         fired, loading, loaded
     }
 
     void Awake () {
         //VERY TEMP
-        player = new Player();
 
         moveX = 0; moveY = 0; moving = false; movingLastFrame = false; hookState = hState.loaded;
         xSpeed = 0; ySpeed = 0;

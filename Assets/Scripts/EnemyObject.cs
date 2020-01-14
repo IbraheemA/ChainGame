@@ -9,15 +9,13 @@ public class EnemyObject : MonoBehaviour {
     public Enemy enemy;
     private void Awake()
     {
-        //VERY TEMP
-        enemy = new Enemy();
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
         if(collision.collider.gameObject.name == "Hook")
         {
-            collision.gameObject.GetComponentInParent<PlayerObject>().player.processHit(enemy);
+            collision.gameObject.GetComponentInParent<PlayerObject>().player.processHit(enemy, collision);
         }
     }
 }

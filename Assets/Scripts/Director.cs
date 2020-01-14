@@ -1,16 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Entities;
 
 public class Director : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
+	void Awake () {
+
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
+    void Start()
+    {
+        SpawnPlayer(0, 0);
+        SpawnEnemy(0, 0, "null");
+    }
+
+    void SpawnPlayer(float X, float Y)
+    {
+        new Player();
+    }
+    void SpawnEnemy(float X, float Y, string type)
+    {
+        Enemy toSpawn = new Enemy(new Vector2(X,Y), 20);
+    }
 }
