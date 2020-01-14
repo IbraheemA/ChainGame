@@ -5,17 +5,14 @@ using Entities;
 
 public class EnemyObject : MonoBehaviour {
 
-    // Use this for initialization
     public Enemy enemy;
-    private void Awake()
+
+    void Awake()
     {
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    void Update()
     {
-        if(collision.collider.gameObject.name == "Hook")
-        {
-            collision.gameObject.GetComponentInParent<PlayerObject>().player.processHit(enemy, collision);
-        }
+        enemy.Update();
     }
 }

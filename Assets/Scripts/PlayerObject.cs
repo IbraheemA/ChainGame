@@ -8,12 +8,15 @@ public class PlayerObject : MonoBehaviour {
     private int moveX, moveY;
     private bool moving, movingLastFrame;
     private float xSpeed, ySpeed, moveSpeed;
-    public float shootSpeed;
+    public float shootSpeed { get; private set; }
+    public Vector2 hookVelocity, hookPositionLastFrame;
     private float initialAngle, targetAngle, rotateTarget, rotationPercentage;
+    private float hookSize;
     private float moveAngle, hookAngle, lastMoveAngle;
     private float loadTimer;
-    public hState hookState;
-    public GameObject hook, anchor;
+    public hState hookState { get; private set; }
+    public GameObject hook { get; private set; }
+    public GameObject anchor { get; private set; }
     public Player player;
 
     public enum hState
@@ -35,6 +38,7 @@ public class PlayerObject : MonoBehaviour {
         //TODO: Possibly make anchor and hook finding nicer?
         anchor = transform.GetChild(0).gameObject;
         hook = anchor.transform.GetChild(0).gameObject;
+        hookSize = hook.GetComponent<CircleCollider2D>().radius;
     }
 
 	void Update () {
@@ -93,10 +97,13 @@ public class PlayerObject : MonoBehaviour {
             loadTimer = 0.1f;
         }
 
-        if (Input.GetKey("space") && hookState == hState.loaded)
+        if (hookState == hState.loaded)
         {
-            shootSpeed = 9;
-            hookState = hState.fired;
+            shootSpeed = 0;
+            if (Input.GetKey("space")) {
+                shootSpeed = 9;
+                hookState = hState.fired;
+            }
         }
         else
         {
@@ -112,9 +119,17 @@ public class PlayerObject : MonoBehaviour {
             loadTimer -= Time.deltaTime;
         }
 
-        hook.transform.localPosition = new Vector2(Mathf.Max(hook.transform.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+        Transform ht = hook.transform;
+        Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
+        Vector2 currentPos = ht.position;
+        Vector2 circleDirection = nextPos - currentPos;
+        player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, hookSize, circleDirection, shootSpeed * Time.deltaTime));
+        ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
 
+        //TRACKING
+        hookVelocity = new Vector2(hook.transform.position.x - hookPositionLastFrame.x, hook.transform.position.y - hookPositionLastFrame.y);
         movingLastFrame = moving;
         lastMoveAngle = moveAngle;
+        hookPositionLastFrame = hook.transform.position;
     }
 }

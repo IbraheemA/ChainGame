@@ -17,7 +17,7 @@ public class Director : MonoBehaviour {
 
     void SpawnPlayer(float X, float Y)
     {
-        new Player();
+        new Player(new Vector2(X,Y));
     }
     void SpawnEnemy(float X, float Y, string type)
     {
