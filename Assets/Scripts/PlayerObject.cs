@@ -6,8 +6,8 @@ using Entities;
 public class PlayerObject : MonoBehaviour {
 
     private int moveX, moveY;
-    private bool moving, movingLastFrame;
-    private float xSpeed, ySpeed, moveSpeed;
+    private bool movingLastFrame;
+    private float moveSpeed;
     public float shootSpeed { get; private set; }
     public Vector2 hookVelocity, hookPositionLastFrame;
     private float initialAngle, targetAngle, rotateTarget, rotationPercentage;
@@ -17,7 +17,7 @@ public class PlayerObject : MonoBehaviour {
     public hState hookState { get; private set; }
     public GameObject hook { get; private set; }
     public GameObject anchor { get; private set; }
-    public Player player;
+    public Player linkedScript;
 
     public enum hState
     {
@@ -25,10 +25,8 @@ public class PlayerObject : MonoBehaviour {
     }
 
     void Awake () {
-        //VERY TEMP
 
-        moveX = 0; moveY = 0; moving = false; movingLastFrame = false; hookState = hState.loaded;
-        xSpeed = 0; ySpeed = 0;
+        moveX = 0; moveY = 0; movingLastFrame = false; hookState = hState.loaded;
         moveSpeed = 20f;
         loadTimer = 0;
         shootSpeed = 0; lastMoveAngle = 0;
@@ -41,30 +39,43 @@ public class PlayerObject : MonoBehaviour {
         hookSize = hook.GetComponent<CircleCollider2D>().radius;
     }
 
-	void Update () {
+    void Start()
+    {
+        linkedScript.velocity = new Vector2(0, 0);
+    }
+
+    void Update () {
 
         //MOVEMENT
         moveX = (Input.GetKey("right") ? 1 : 0) - (Input.GetKey("left") ? 1 : 0);
         moveY = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
-        moving = moveX != 0 || moveY != 0;
         float speedMod = (moveX != 0 && moveY != 0) ? 1 / Mathf.Sqrt(2) : 1;
         float appliedSpeed = speedMod * moveSpeed;
 
-        xSpeed = (moveX != 0) ? xSpeed + moveX * 1.5f : Mathf.Sign(xSpeed) * Mathf.Max(0, Mathf.Abs(xSpeed) - 1);
-        xSpeed = Mathf.Clamp(xSpeed, -appliedSpeed, appliedSpeed);
-        ySpeed = (moveY != 0) ? ySpeed + moveY * 1.5f : Mathf.Sign(ySpeed) * Mathf.Max(0, Mathf.Abs(ySpeed) - 1);
-        ySpeed = Mathf.Clamp(ySpeed, -appliedSpeed, appliedSpeed);
+        Vector2 v = linkedScript.velocity;
+        v.x = (moveX != 0) ? v.x + moveX * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 1);
+        v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
+        v.y = (moveY != 0) ? v.y + moveY * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 1);
+        v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
 
-        transform.Translate(xSpeed * Time.deltaTime, ySpeed * Time.deltaTime, 0);
+        linkedScript.velocity = v;
 
-        if (moveX != 0 || moveY != 0) {
-            moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY));
-            moving = true;
-        }
-        else
+        Vector2 currentPos = hook.transform.position;
+        transform.Translate(linkedScript.velocity.x * Time.deltaTime, linkedScript.velocity.y * Time.deltaTime, 0);
+
+        if (linkedScript.moveState != LiveEntity.moveStates.stunned)
         {
-            moving = false;
+            if (moveX != 0 || moveY != 0)
+            {
+                moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY));
+                linkedScript.moveState = LiveEntity.moveStates.active;
+            }
+            else
+            {
+                linkedScript.moveState = LiveEntity.moveStates.stationary;
+            }
         }
+
         hookAngle = moveAngle - Mathf.Sign(moveAngle) * 180;
 
         //HOOK ROTATION
@@ -121,14 +132,16 @@ public class PlayerObject : MonoBehaviour {
 
         Transform ht = hook.transform;
         Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
-        Vector2 currentPos = ht.position;
         Vector2 circleDirection = nextPos - currentPos;
-        player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, hookSize, circleDirection, shootSpeed * Time.deltaTime));
+        if (hookState == PlayerObject.hState.fired)
+        {
+            linkedScript.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, hookSize, circleDirection, shootSpeed * Time.deltaTime));
+        }
         ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
 
         //TRACKING
         hookVelocity = new Vector2(hook.transform.position.x - hookPositionLastFrame.x, hook.transform.position.y - hookPositionLastFrame.y);
-        movingLastFrame = moving;
+        movingLastFrame = (linkedScript.moveState == LiveEntity.moveStates.active);
         lastMoveAngle = moveAngle;
         hookPositionLastFrame = hook.transform.position;
     }

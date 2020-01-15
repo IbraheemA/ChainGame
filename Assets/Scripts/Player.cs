@@ -7,25 +7,25 @@ namespace Entities
     {
         private PlayerObject objectScript;
         private GameObject playerObject;
-        private float hookDamage = 2;
-        private float hookKnockback = 5;
+        private float hookDamage = 5;
+        private float hookKnockback = 80;
 
         public Player(Vector2 position)
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/PlayerObject"), new Vector2(position.x, position.y), Quaternion.identity);
             objectScript = attachedObject.GetComponent<PlayerObject>();
-            objectScript.player = this;
+            objectScript.linkedScript = this;
 
         }
 
         private void processHit(LiveEntity target, RaycastHit2D collision)
         {
-            if (objectScript.hookState == PlayerObject.hState.fired)
+            if (!target.invincible)
             {
                 target.TakeDamage(hookDamage);
                 Transform t = target.attachedObject.transform;
                 Vector2 knockback = collision.normal * -hookKnockback; //new Vector2(t.position.x - cp.point.x, t.position.y - cp.point.y) * 5;
-                target.ApplyKnockback(knockback, true, 0.2f);
+                target.ApplyKnockback(knockback, 0.2f, 0.2f, 0.05f);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Entities
             {
                 if (i.transform.gameObject.tag == "Enemy")
                 {
-                    processHit(i.transform.gameObject.GetComponent<EnemyObject>().enemy, i);
+                    processHit(i.transform.gameObject.GetComponent<EnemyObject>().linkedScript, i);
                 }
             }
         }
@@ -47,6 +47,7 @@ namespace Entities
 
         public override void Update()
         {
+            base.Update();
         }
     }
 }

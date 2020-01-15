@@ -5,7 +5,7 @@ using Entities;
 
 public class EnemyObject : MonoBehaviour {
 
-    public Enemy enemy;
+    public Enemy linkedScript;
 
     void Awake()
     {
@@ -13,6 +13,7 @@ public class EnemyObject : MonoBehaviour {
 
     void Update()
     {
-        enemy.Update();
+        linkedScript.Update();
+        transform.Translate(linkedScript.velocity * Time.deltaTime);
     }
 }
