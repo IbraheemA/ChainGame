@@ -59,31 +59,19 @@ namespace Entities
         protected abstract void Death();
 
         public virtual void Update() {
-            if(invincibilityTimer <= 0)
-            {
-                invincible = false;
-            }
-            else
-            {
-                invincibilityTimer -= Time.deltaTime;
-            }
+            if(invincibilityTimer <= 0){invincible = false;}
+            else{invincibilityTimer -= Time.deltaTime;}
+
             if (hitStunTimer <= 0)
             {
                 if (moveState == moveStates.stunned) { moveState = moveStates.stationary; }
             }
-            else
-            {
-                hitStunTimer -= Time.deltaTime;
-            }
+            else{hitStunTimer -= Time.deltaTime;}
 
-            if (launchTimer <= 0)
-            {
+            if (launchTimer <= 0){
                 if (moveState == moveStates.launched) { moveState = moveStates.stunned; }
             }
-            else
-            {
-                launchTimer -= Time.deltaTime;
-            }
+            else{launchTimer -= Time.deltaTime;}
         }
 
         protected void StandardSeek(Entity target)

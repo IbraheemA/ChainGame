@@ -26,7 +26,7 @@ namespace Entities
         public override void Update()
         {
             base.Update();
-            StandardSeek(Director.player);
+            StepSeek(Director.player, true);
             attachedObject.transform.Translate(velocity * Time.deltaTime);
         }
     }
