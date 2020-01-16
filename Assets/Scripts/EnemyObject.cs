@@ -14,6 +14,6 @@ public class EnemyObject : MonoBehaviour {
     void Update()
     {
         linkedScript.Update();
-        transform.Translate(linkedScript.velocity * Time.deltaTime);
+        //Debug.Log(linkedScript.moveState);
     }
 }

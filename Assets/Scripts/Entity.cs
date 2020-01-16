@@ -14,18 +14,19 @@ namespace Entities
 
     public abstract class LiveEntity : Entity
     {
-        public float maxHealth { get; private set; }
-        public float health { get; private set; }
-        public bool invincible { get; private set; }
+        public float maxHealth { get; protected set; }
+        public float health { get; protected set; }
+        public float moveSpeed { get; protected set; }
+        public bool invincible { get; protected set; }
         public Vector2 velocity;
-        private float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
+        protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
         public moveStates moveState;
         public enum moveStates
         {
             active,
             stunned,
             stationary,
-            knocked
+            launched
         }
 
         public LiveEntity()
@@ -35,9 +36,10 @@ namespace Entities
 
         public LiveEntity(float maxHealth)
         {
+            moveState = moveStates.stationary;
             this.maxHealth = maxHealth;
             health = maxHealth;
-            moveState = moveStates.stationary;
+            this.moveSpeed = 10;
         }
         public void TakeDamage(float damageAmount)
         {
@@ -56,7 +58,7 @@ namespace Entities
             hitStunTimer = hitStunDuration;
             launchTimer = launchDuration;
             if (invincibilityDuration != 0) { invincible = true; }
-            if (hitStunDuration != 0) { moveState = moveStates.knocked; }
+            if (hitStunDuration != 0) { moveState = (launchTimer != 0) ? moveStates.launched : moveStates.stunned; }
         }
 
         protected abstract void Death();
@@ -72,7 +74,7 @@ namespace Entities
             }
             if (hitStunTimer <= 0)
             {
-                moveState = moveStates.stationary;
+                if (moveState == moveStates.stunned) { moveState = moveStates.stationary; }
             }
             else
             {
@@ -81,7 +83,7 @@ namespace Entities
 
             if (launchTimer <= 0)
             {
-                moveState = moveStates.stunned;
+                if (moveState == moveStates.launched) { moveState = moveStates.stunned; }
             }
             else
             {
