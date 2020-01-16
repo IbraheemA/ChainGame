@@ -7,7 +7,7 @@ public class Director : MonoBehaviour {
 
     public static Player player;
     public static Director self;
-    private float spawnTimerMax = 3;
+    private float spawnTimerMax = 3f;
     private float spawnTimer = 0;
 
 	void Awake () {
@@ -25,7 +25,9 @@ public class Director : MonoBehaviour {
         if(spawnTimer <= 0)
         {
             //MAKE THIS PICK VALID SPAWN POINTS (EDGES OF SCREEN AND NOT ON PLAYER)
-            SpawnEnemy(Random.Range(-30, 30), Random.Range(-20, 20), "Grunt");
+            List<string> names = new List<string> { "Grunt", "Chaser" };
+            int index = Mathf.Min((int)Mathf.Floor(Random.Range(0, names.Count)), names.Count);
+            SpawnEnemy(Random.Range(-30, 30), Random.Range(-20, 20), names[index]);
             spawnTimer = spawnTimerMax;
         }
         else
@@ -46,6 +48,9 @@ public class Director : MonoBehaviour {
         switch (typeToSpawn) {
             case "Grunt":
                 toSpawn = new Grunt(new Vector2(X, Y));
+                break;
+            case "Chaser":
+                toSpawn = new Chaser(new Vector2(X, Y));
                 break;
             default:
                 toSpawn = new Grunt(new Vector2(X, Y));

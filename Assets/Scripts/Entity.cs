@@ -21,8 +21,7 @@ namespace Entities
         public Vector2 velocity;
         protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
         protected float decisionTimerMax;
-        protected float decisionTimer;
-        protected float aggroRadius;
+        protected float decisionTimer = 0;
         protected moveStates moveState;
         public enum moveStates
         {
@@ -58,20 +57,22 @@ namespace Entities
 
         protected abstract void Death();
 
-        public virtual void Update() {
-            if(invincibilityTimer <= 0){invincible = false;}
-            else{invincibilityTimer -= Time.deltaTime;}
+        public virtual void Update()
+        {
+            if (invincibilityTimer <= 0) { invincible = false; }
+            else { invincibilityTimer -= Time.deltaTime; }
 
             if (hitStunTimer <= 0)
             {
                 if (moveState == moveStates.stunned) { moveState = moveStates.stationary; }
             }
-            else{hitStunTimer -= Time.deltaTime;}
+            else { hitStunTimer -= Time.deltaTime; }
 
-            if (launchTimer <= 0){
+            if (launchTimer <= 0)
+            {
                 if (moveState == moveStates.launched) { moveState = moveStates.stunned; }
             }
-            else{launchTimer -= Time.deltaTime;}
+            else { launchTimer -= Time.deltaTime; }
         }
 
         protected void StandardSeek(Entity target)
@@ -95,10 +96,63 @@ namespace Entities
             }
         }
 
-        protected void StepSeek(Entity target, bool withAggro)
+        protected void StandardSeek(Vector3 target)
+        {
+            Vector2 vectorToTarget = (target - attachedObject.transform.position);
+            switch (moveState)
+            {
+                case moveStates.stunned:
+                    velocity *= 0.4f;
+                    break;
+                case moveStates.stationary:
+                    velocity = vectorToTarget.normalized * moveSpeed;
+                    moveState = moveStates.active;
+                    break;
+                case moveStates.active:
+                    velocity = vectorToTarget.normalized * moveSpeed;
+                    moveState = moveStates.active;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        protected void StepSeek(Entity target, float aggroRadius)
         {
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            decisionTimer -= Time.deltaTime * (withAggro ? Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude)) : 1);
+            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
+            switch (moveState)
+            {
+                case moveStates.stunned:
+                    velocity *= 0.4f;
+                    break;
+                case moveStates.stationary:
+                    velocity = Vector2.zero;
+                    if (decisionTimer <= 0)
+                    {
+                        decisionTimer = decisionTimerMax;
+                        velocity = vectorToTarget.normalized * moveSpeed;
+                        moveState = moveStates.active;
+                    }
+                    break;
+                case moveStates.active:
+                    if (decisionTimer <= 0)
+                    {
+                        decisionTimer = decisionTimerMax;
+                        velocity = vectorToTarget.normalized * moveSpeed;
+                        moveState = moveStates.active;
+                        //Debug.Log(velocity);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        protected void StepSeek(Vector3 target, float aggroRadius)
+        {
+            Vector2 vectorToTarget = (target - attachedObject.transform.position);
+            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
             switch (moveState)
             {
                 case moveStates.stunned:
@@ -128,4 +182,3 @@ namespace Entities
         }
     }
 }
-

@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Entities
 {
-    public class Grunt : Enemy
+    public class Chaser : Enemy
     {
         private float aggroRadius;
-        public Grunt(Vector2 position)
+        public Chaser(Vector2 position)
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/EnemyObject"), position, Quaternion.identity);
             objectScript = attachedObject.GetComponent<EnemyObject>();
@@ -19,15 +19,15 @@ namespace Entities
             aggroRadius = 15;
 
             //STATS
-            maxHealth = 8;
+            maxHealth = 20;
             health = maxHealth;
-            moveSpeed = 10;
+            moveSpeed = 15;
         }
 
         public override void Update()
         {
             base.Update();
-            StepSeek(Director.player, aggroRadius);
+            StandardSeek(Director.player);
             attachedObject.transform.Translate(velocity * Time.deltaTime);
         }
     }

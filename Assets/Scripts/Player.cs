@@ -19,13 +19,16 @@ namespace Entities
         private float hookSize;
         private float moveAngle = 0;
         private float hookAngle = 0;
-        private float lastMoveAngle = 0;
+        private float lastHookAngle = 0;
+        private float lastMoveAngle;
         private float loadTimer = 0;
         public hState hookState { get; private set; }
 
         private int moveX = 0;
         private int moveY = 0;
         private bool movingLastFrame = false;
+        private bool hookBackLastFrame = false;
+
         public enum hState
         {
             fired, loading, loaded
@@ -68,30 +71,28 @@ namespace Entities
             }
         }
 
-        protected override void Death()
-        {
-            Debug.Log("Player died!");
-        }
-
         public override void Update()
         {
             base.Update();
-            //MOVEMENT
+            //INPUTS
             moveX = (Input.GetKey("right") ? 1 : 0) - (Input.GetKey("left") ? 1 : 0);
             moveY = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
+            bool directHookBack = Input.GetKey("q");
+            bool lockHookRotation = Input.GetKey("w");
             float speedMod = (moveX != 0 && moveY != 0) ? 1 / Mathf.Sqrt(2) : 1;
             float appliedSpeed = speedMod * moveSpeed;
 
+            //MOVEMENT
             Vector2 v = velocity;
-            v.x = (moveX != 0) ? v.x + moveX * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 1);
+            v.x = (moveX != 0) ? v.x + moveX * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
             v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
-            v.y = (moveY != 0) ? v.y + moveY * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 1);
+            v.y = (moveY != 0) ? v.y + moveY * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
             v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
 
             velocity = v;
 
             Vector2 currentPos = hook.transform.position;
-            attachedObject.transform.Translate(velocity.x * Time.deltaTime, velocity.y * Time.deltaTime, 0);
+            attachedObject.transform.Translate(velocity * Time.deltaTime);
 
             if (moveState != LiveEntity.moveStates.stunned)
             {
@@ -106,7 +107,8 @@ namespace Entities
                 }
             }
 
-            hookAngle = moveAngle;// - Mathf.Sign(moveAngle) * 180;
+            lastHookAngle = hookAngle;
+            hookAngle = moveAngle - (directHookBack ? Mathf.Sign(moveAngle) * 180 : 0);
 
             //HOOK ROTATION
             float eulersZ = anchor.transform.localRotation.eulerAngles.z;
@@ -114,11 +116,12 @@ namespace Entities
             float diff = (hookAngle - eulersZ + 180) % 360 - 180;
             diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
 
-            if (moveAngle != lastMoveAngle)
+            if (hookAngle != lastHookAngle)
             {
-                if (!movingLastFrame)
+                if (!movingLastFrame && hookBackLastFrame == directHookBack)
                 {
                     moveAngle = lastMoveAngle;
+                    hookAngle = lastHookAngle;
                 }
                 else
                 {
@@ -127,9 +130,12 @@ namespace Entities
                     rotationPercentage = 0;
                 }
             }
-            rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.4f);
-            rotateTarget = Mathf.LerpAngle(initialAngle, targetAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
-            anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
+            if (!lockHookRotation)
+            {
+                rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.4f);
+                rotateTarget = Mathf.LerpAngle(initialAngle, targetAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
+                anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
+            }
 
             //HOOK PROPULSION
             if (hook.transform.localPosition.x == 0.2f && hookState == hState.fired)
@@ -172,7 +178,23 @@ namespace Entities
 
             //TRACKING
             movingLastFrame = (moveState == LiveEntity.moveStates.active);
+            hookBackLastFrame = directHookBack;
             lastMoveAngle = moveAngle;
+
+            //GRAPHICS
+            if (lockHookRotation)
+            {
+                hook.transform.GetChild(0).gameObject.SetActive(true);
+            }
+            else
+            {
+                hook.transform.GetChild(0).gameObject.SetActive(false);
+            }
+        }
+
+        protected override void Death()
+        {
+            Debug.Log("Player died!");
         }
     }
 }
