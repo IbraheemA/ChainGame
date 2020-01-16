@@ -5,8 +5,8 @@ namespace Entities
 {
     public class Player : LiveEntity
     {
+        //DECLARING VARIABLES
         private PlayerObject objectScript;
-        private GameObject playerObject;
         private float hookDamage = 5;
         private float hookKnockback = 80;
 
@@ -30,7 +30,6 @@ namespace Entities
         {
             fired, loading, loaded
         }
-        //TODO: Possibly make anchor and hook finding nicer?
         private GameObject anchor;
         private GameObject hook;
 

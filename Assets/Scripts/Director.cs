@@ -15,16 +15,24 @@ public class Director : MonoBehaviour {
     void Start()
     {
         player = SpawnPlayer(0, 0);
-        SpawnEnemy(30, 0, "null");
+        SpawnEnemy(30, 0, "Grunt");
     }
 
     Player SpawnPlayer(float X, float Y)
     {
         return new Player(new Vector2(X, Y));
     }
-    Enemy SpawnEnemy(float X, float Y, string type)
+    Enemy SpawnEnemy(float X, float Y, string typeToSpawn)
     {
-        Grunt toSpawn = new Grunt(new Vector2(X,Y), 20);
+        Enemy toSpawn;
+        switch (typeToSpawn) {
+            case "Grunt":
+                toSpawn = new Grunt(new Vector2(X, Y));
+                break;
+            default:
+                toSpawn = new Grunt(new Vector2(X, Y));
+                break;
+        }
         return toSpawn;
     }
 }

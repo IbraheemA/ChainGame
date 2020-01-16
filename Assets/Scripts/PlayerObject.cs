@@ -5,21 +5,10 @@ using Entities;
 
 public class PlayerObject : MonoBehaviour {
 
-
     public Player linkedScript;
 
-
-
-    void Awake () {
-
-    }
-
-    void Start()
+    void Update()
     {
-        linkedScript.velocity = new Vector2(0, 0);
-    }
-
-    void Update () {
         linkedScript.Update();
     }
 }

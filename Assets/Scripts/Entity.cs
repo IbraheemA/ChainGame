@@ -20,7 +20,10 @@ namespace Entities
         public bool invincible { get; protected set; }
         public Vector2 velocity;
         protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
-        public moveStates moveState;
+        protected float decisionTimerMax;
+        protected float decisionTimer;
+        protected float aggroRadius;
+        protected moveStates moveState;
         public enum moveStates
         {
             active,
@@ -32,14 +35,6 @@ namespace Entities
         public LiveEntity()
         {
             moveState = moveStates.stationary;
-        }
-
-        public LiveEntity(float maxHealth)
-        {
-            moveState = moveStates.stationary;
-            this.maxHealth = maxHealth;
-            health = maxHealth;
-            this.moveSpeed = 10;
         }
         public void TakeDamage(float damageAmount)
         {
@@ -88,6 +83,59 @@ namespace Entities
             else
             {
                 launchTimer -= Time.deltaTime;
+            }
+        }
+
+        protected void StandardSeek(Entity target)
+        {
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            switch (moveState)
+            {
+                case moveStates.stunned:
+                    velocity *= 0.4f;
+                    break;
+                case moveStates.stationary:
+                    velocity = vectorToTarget.normalized * moveSpeed;
+                    moveState = moveStates.active;
+                    break;
+                case moveStates.active:
+                    velocity = vectorToTarget.normalized * moveSpeed;
+                    moveState = moveStates.active;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        protected void StepSeek(Entity target, bool withAggro)
+        {
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            decisionTimer -= Time.deltaTime * (withAggro ? Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude)) : 1);
+            switch (moveState)
+            {
+                case moveStates.stunned:
+                    velocity *= 0.4f;
+                    break;
+                case moveStates.stationary:
+                    velocity = Vector2.zero;
+                    if (decisionTimer <= 0)
+                    {
+                        decisionTimer = decisionTimerMax;
+                        velocity = vectorToTarget.normalized * moveSpeed;
+                        moveState = moveStates.active;
+                    }
+                    break;
+                case moveStates.active:
+                    if (decisionTimer <= 0)
+                    {
+                        decisionTimer = decisionTimerMax;
+                        velocity = vectorToTarget.normalized * moveSpeed;
+                        moveState = moveStates.active;
+                        //Debug.Log(velocity);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }

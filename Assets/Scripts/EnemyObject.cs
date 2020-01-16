@@ -7,13 +7,8 @@ public class EnemyObject : MonoBehaviour {
 
     public Enemy linkedScript;
 
-    void Awake()
-    {
-    }
-
     void Update()
     {
         linkedScript.Update();
-        //Debug.Log(linkedScript.moveState);
     }
 }
