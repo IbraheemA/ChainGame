@@ -56,7 +56,7 @@ namespace Entities
 
         public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float invincibilityDuration, float launchDuration)
         {
-            velocity = knockback;
+            velocity = knockback/mass;
             invincibilityTimer = invincibilityDuration;
             hitStunTimer = hitStunDuration;
             launchTimer = launchDuration;

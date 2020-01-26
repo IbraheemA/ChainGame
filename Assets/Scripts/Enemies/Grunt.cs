@@ -36,7 +36,7 @@ namespace Entities
             else
             {
                 //ChaseDecision(Director.player, aggroRadius);
-                //StepSeek(Director.player, aggroRadius);
+                StepSeek(Director.player, aggroRadius);
                 attachedObject.transform.Translate(attachedObject.transform.InverseTransformDirection(velocity) * Time.deltaTime);
             }
         }
