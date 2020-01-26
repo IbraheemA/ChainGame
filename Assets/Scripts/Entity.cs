@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Entities
 {
@@ -17,11 +20,16 @@ namespace Entities
         public float maxHealth { get; protected set; }
         public float health { get; protected set; }
         public float moveSpeed { get; protected set; }
+
+        protected float decisionTimerMax;
+        protected float decisionTimer = 0;
+        protected float mass;
+
         public bool invincible { get; protected set; }
         public Vector2 velocity;
         protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
-        protected float decisionTimerMax;
-        protected float decisionTimer = 0;
+        protected Task launchTask;
+        protected CancellationTokenSource launchTaskTokenSource;
         protected moveStates moveState;
         public enum moveStates
         {
@@ -35,6 +43,7 @@ namespace Entities
         {
             moveState = moveStates.stationary;
         }
+
         public void TakeDamage(float damageAmount)
         {
             //Debug.Log("Taking damage: " + damageAmount);
@@ -47,32 +56,59 @@ namespace Entities
 
         public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float invincibilityDuration, float launchDuration)
         {
-            velocity = knockback;
-            invincibilityTimer = invincibilityDuration;
+            velocity = knockback/mass;
             hitStunTimer = hitStunDuration;
-            launchTimer = launchDuration;
-            if (invincibilityDuration != 0) { invincible = true; }
-            if (hitStunDuration != 0) { moveState = (launchTimer != 0) ? moveStates.launched : moveStates.stunned; }
+            //launchTimer = launchDuration;
+            if (invincibilityDuration != 0)
+            {
+                Task.Run(async () =>
+                {
+                    invincible = true;
+                    await Task.Delay(TimeSpan.FromSeconds(invincibilityDuration));
+                    invincible = false;
+                });
+            }
+
+            if (hitStunDuration != 0)
+            {
+                Task.Run(async () =>
+                {
+                    moveState = moveStates.stunned;
+                    await Task.Delay(TimeSpan.FromSeconds(hitStunDuration));
+                    moveState = moveStates.active;
+                });
+            }
+
+            if (launchDuration != 0)
+            {
+                if (launchTaskTokenSource != null) { launchTaskTokenSource.Cancel(); }
+                launchTaskTokenSource = new CancellationTokenSource();
+                CancellationToken cancellationToken = launchTaskTokenSource.Token;
+                launchTask = Task.Factory.StartNew(async () =>
+                {
+                    velocity = knockback / mass;
+                    await Task.Delay(TimeSpan.FromSeconds(launchDuration));
+                    velocity = Vector2.zero;
+                }, cancellationToken);
+            }
         }
 
         protected abstract void Death();
-
+ 
         public virtual void Update()
         {
-            if (invincibilityTimer <= 0) { invincible = false; }
-            else { invincibilityTimer -= Time.deltaTime; }
 
-            if (hitStunTimer <= 0)
-            {
-                if (moveState == moveStates.stunned) { moveState = moveStates.stationary; }
-            }
-            else { hitStunTimer -= Time.deltaTime; }
+        }
 
-            if (launchTimer <= 0)
-            {
-                if (moveState == moveStates.launched) { moveState = moveStates.stunned; }
-            }
-            else { launchTimer -= Time.deltaTime; }
+        protected void LookAt(Entity target)
+        {
+            attachedObject.transform.rotation = Quaternion.LookRotation(Vector3.forward, attachedObject.transform.position - target.attachedObject.transform.position);
+        }
+
+        protected void ChaseDecision(Entity target, float aggroRadius)
+        {
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
         }
 
         protected void StandardSeek(Entity target)
@@ -85,10 +121,12 @@ namespace Entities
                     break;
                 case moveStates.stationary:
                     velocity = vectorToTarget.normalized * moveSpeed;
+                    LookAt(target);
                     moveState = moveStates.active;
                     break;
                 case moveStates.active:
                     velocity = vectorToTarget.normalized * moveSpeed;
+                    LookAt(target);
                     moveState = moveStates.active;
                     break;
                 default:
@@ -119,12 +157,12 @@ namespace Entities
 
         protected void StepSeek(Entity target, float aggroRadius)
         {
+            ChaseDecision(target, aggroRadius);
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
             switch (moveState)
             {
                 case moveStates.stunned:
-                    velocity *= 0.4f;
+                    //velocity *= 0.4f;
                     break;
                 case moveStates.stationary:
                     velocity = Vector2.zero;
@@ -132,6 +170,7 @@ namespace Entities
                     {
                         decisionTimer = decisionTimerMax;
                         velocity = vectorToTarget.normalized * moveSpeed;
+                        LookAt(target);
                         moveState = moveStates.active;
                     }
                     break;
@@ -140,6 +179,7 @@ namespace Entities
                     {
                         decisionTimer = decisionTimerMax;
                         velocity = vectorToTarget.normalized * moveSpeed;
+                        LookAt(target);
                         moveState = moveStates.active;
                         //Debug.Log(velocity);
                     }

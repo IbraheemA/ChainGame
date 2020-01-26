@@ -9,6 +9,7 @@ namespace Entities
         private PlayerObject objectScript;
         private float hookDamage = 5;
         private float hookKnockback = 80;
+        private float hookMass = 10;
 
         private float shootSpeed = 0;
         public Vector2 hookVelocity;
@@ -24,8 +25,6 @@ namespace Entities
         private float loadTimer = 0;
         public hState hookState { get; private set; }
 
-        private int moveX = 0;
-        private int moveY = 0;
         private bool movingLastFrame = false;
         private bool hookBackLastFrame = false;
 
@@ -54,7 +53,7 @@ namespace Entities
             {
                 target.TakeDamage(hookDamage);
                 Transform t = target.attachedObject.transform;
-                Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed)*hookVelocity.normalized).normalized/2 * hookKnockback;
+                Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed)*hookVelocity.normalized).normalized/2 * hookKnockback * hookMass;
                 //Vector2 knockback = collision.normal * -hookKnockback;
                 target.ApplyKnockback(knockback, 0.2f, 0.2f, 0.05f);
             }
@@ -75,18 +74,19 @@ namespace Entities
         {
             base.Update();
             //INPUTS
-            moveX = (Input.GetKey("right") ? 1 : 0) - (Input.GetKey("left") ? 1 : 0);
-            moveY = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
+            Vector2 move = Vector2.zero;
+            move.x = (Input.GetKey("right") ? 1 : 0) - (Input.GetKey("left") ? 1 : 0);
+            move.y = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
             bool directHookBack = Input.GetKey("q");
             bool lockHookRotation = Input.GetKey("w");
-            float speedMod = (moveX != 0 && moveY != 0) ? 1 / Mathf.Sqrt(2) : 1;
+            float speedMod = (move.x != 0 && move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
             float appliedSpeed = speedMod * moveSpeed;
 
             //MOVEMENT
             Vector2 v = velocity;
-            v.x = (moveX != 0) ? v.x + moveX * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
+            v.x = (move.x != 0) ? v.x + move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
             v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
-            v.y = (moveY != 0) ? v.y + moveY * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
+            v.y = (move.y != 0) ? v.y + move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
             v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
 
             velocity = v;
@@ -96,9 +96,9 @@ namespace Entities
 
             if (moveState != LiveEntity.moveStates.stunned)
             {
-                if (moveX != 0 || moveY != 0)
+                if (move.x != 0 || move.y != 0)
                 {
-                    moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * moveX, 10 * moveY));
+                    moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * move.x, 10 * move.y));
                     moveState = LiveEntity.moveStates.active;
                 }
                 else

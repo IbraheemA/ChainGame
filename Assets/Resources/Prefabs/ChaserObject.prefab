@@ -9,35 +9,35 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1658044407126206}
+  m_RootGameObject: {fileID: 1731853287904782}
   m_IsPrefabAsset: 1
---- !u!1 &1658044407126206
+--- !u!1 &1731853287904782
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 224261166594282386}
-  - component: {fileID: 212633702015970768}
-  - component: {fileID: 222834466489494450}
-  - component: {fileID: 50324203545936796}
-  - component: {fileID: 58966451035247048}
-  - component: {fileID: 114051624277979200}
+  - component: {fileID: 224207697152900480}
+  - component: {fileID: 212503400621462440}
+  - component: {fileID: 222495737163025818}
+  - component: {fileID: 50618333348959854}
+  - component: {fileID: 58418416772162102}
+  - component: {fileID: 114991735226554532}
   m_Layer: 0
-  m_Name: EnemyObject
+  m_Name: ChaserObject
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!50 &50324203545936796
+--- !u!50 &50618333348959854
 Rigidbody2D:
   serializedVersion: 4
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
+  m_GameObject: {fileID: 1731853287904782}
   m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 1
@@ -51,12 +51,12 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!58 &58966451035247048
+--- !u!58 &58418416772162102
 CircleCollider2D:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
+  m_GameObject: {fileID: 1731853287904782}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -66,23 +66,23 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.4
---- !u!114 &114051624277979200
+--- !u!114 &114991735226554532
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
+  m_GameObject: {fileID: 1731853287904782}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce0b9eaaf9254cf459ade73e8542c0bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!212 &212633702015970768
+--- !u!212 &212503400621462440
 SpriteRenderer:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
+  m_GameObject: {fileID: 1731853287904782}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -112,7 +112,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 182ed3db674f97840b1a5c8839350dae, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f0422a58d3622ec498c703ced556987f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,22 +123,22 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!222 &222834466489494450
+--- !u!222 &222495737163025818
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
+  m_GameObject: {fileID: 1731853287904782}
   m_CullTransparentMesh: 0
---- !u!224 &224261166594282386
+--- !u!224 &224207697152900480
 RectTransform:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1658044407126206}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_GameObject: {fileID: 1731853287904782}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4, y: 4, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0

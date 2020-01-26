@@ -6,7 +6,7 @@ namespace Entities
 {
     public class Grunt : Enemy
     {
-        private float aggroRadius;
+        private float aggroRadius, attackRadius;
         public Grunt(Vector2 position)
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/EnemyObject"), position, Quaternion.identity);
@@ -14,12 +14,14 @@ namespace Entities
             objectScript.linkedScript = this;
 
             //BEHAVIOUR VALUES
+            mass = 10;
             decisionTimerMax = 1.5f;
             decisionTimer = 0;
             aggroRadius = 15;
+            attackRadius = 3;
 
             //STATS
-            maxHealth = 8;
+            maxHealth = 20;
             health = maxHealth;
             moveSpeed = 10;
         }
@@ -27,8 +29,16 @@ namespace Entities
         public override void Update()
         {
             base.Update();
-            StepSeek(Director.player, aggroRadius);
-            attachedObject.transform.Translate(velocity * Time.deltaTime);
+            if ((attachedObject.transform.position - Director.player.attachedObject.transform.position).magnitude < attackRadius)
+            {
+                LookAt(Director.player);
+            }
+            else
+            {
+                //ChaseDecision(Director.player, aggroRadius);
+                //StepSeek(Director.player, aggroRadius);
+                attachedObject.transform.Translate(attachedObject.transform.InverseTransformDirection(velocity) * Time.deltaTime);
+            }
         }
     }
 }
