@@ -56,48 +56,32 @@ namespace Entities
 
         public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float invincibilityDuration, float launchDuration)
         {
-            velocity = knockback/mass;
+            velocity = knockback;
+            invincibilityTimer = invincibilityDuration;
             hitStunTimer = hitStunDuration;
-            //launchTimer = launchDuration;
-            if (invincibilityDuration != 0)
-            {
-                Task.Run(async () =>
-                {
-                    invincible = true;
-                    await Task.Delay(TimeSpan.FromSeconds(invincibilityDuration));
-                    invincible = false;
-                });
-            }
-
-            if (hitStunDuration != 0)
-            {
-                Task.Run(async () =>
-                {
-                    moveState = moveStates.stunned;
-                    await Task.Delay(TimeSpan.FromSeconds(hitStunDuration));
-                    moveState = moveStates.active;
-                });
-            }
-
-            if (launchDuration != 0)
-            {
-                if (launchTaskTokenSource != null) { launchTaskTokenSource.Cancel(); }
-                launchTaskTokenSource = new CancellationTokenSource();
-                CancellationToken cancellationToken = launchTaskTokenSource.Token;
-                launchTask = Task.Factory.StartNew(async () =>
-                {
-                    velocity = knockback / mass;
-                    await Task.Delay(TimeSpan.FromSeconds(launchDuration));
-                    velocity = Vector2.zero;
-                }, cancellationToken);
-            }
+            launchTimer = launchDuration;
+            if (invincibilityDuration != 0) { invincible = true; }
+            if (hitStunDuration != 0) { moveState = (launchTimer != 0) ? moveStates.launched : moveStates.stunned; }
         }
 
         protected abstract void Death();
- 
+
         public virtual void Update()
         {
+            if (invincibilityTimer <= 0) { invincible = false; }
+            else { invincibilityTimer -= Time.deltaTime; }
 
+            if (hitStunTimer <= 0)
+            {
+                if (moveState == moveStates.stunned) { moveState = moveStates.stationary; }
+            }
+            else { hitStunTimer -= Time.deltaTime; }
+
+            if (launchTimer <= 0)
+            {
+                if (moveState == moveStates.launched) { moveState = moveStates.stunned; }
+            }
+            else { launchTimer -= Time.deltaTime; }
         }
 
         protected void LookAt(Entity target)
@@ -162,7 +146,7 @@ namespace Entities
             switch (moveState)
             {
                 case moveStates.stunned:
-                    //velocity *= 0.4f;
+                    velocity *= 0.4f;
                     break;
                 case moveStates.stationary:
                     velocity = Vector2.zero;
