@@ -37,9 +37,11 @@ namespace Entities
         {
             base.Update();
         }
-        protected override void Attack()
+        protected override void Attack(Entity target)
         {
-            objectScript.Attack();
+            LookAt(target);
+            state = new GruntAttackingState();
+            state.Enter(this);
         }
 
         public void ChaseDecision(Entity target)
@@ -49,10 +51,7 @@ namespace Entities
             decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
             if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
             {
-                LookAt(target);
-                state = new GruntAttackingState();
-                state.Enter(this);
-
+                Attack(target);
             }
             else
             {

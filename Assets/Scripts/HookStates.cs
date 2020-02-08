@@ -122,7 +122,7 @@ public class HookFiredState : HookState
             Transform t = target.attachedObject.transform;
             Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
-            target.ApplyKnockback(knockback, 0.2f, 0.2f, 0.05f);
+            target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
         }
     }
 }

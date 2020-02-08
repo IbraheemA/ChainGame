@@ -37,6 +37,8 @@ public class GruntAttackingState : EnemyActiveState
     {
         timer = 1;
         entity.velocity = Vector2.zero;
+        //VERY PLACEHOLDER TEST FOR ATTACKING; DO BETTER LATER
+        Director.player.ApplyKnockback((Director.player.attachedObject.transform.position - entity.attachedObject.transform.position).normalized*400, 0.05f, 0.02f, 0.2f);
     }
     public override void Exit(LiveEntity entity)
     {

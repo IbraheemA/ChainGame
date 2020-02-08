@@ -31,28 +31,6 @@ public class InControlState : PlayerState
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
-        Player player = (Player)entity;
-        //INPUTS
-        PlayerInput input = new PlayerInput();
-        input.GetInput();
-        float speedMod = (input.move.x != 0 && input.move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
-        float appliedSpeed = speedMod * player.moveSpeed;
-
-        //MOVEMENT
-        Vector2 v = entity.velocity;
-        v.x = (input.move.x != 0) ? v.x + input.move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
-        v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
-        v.y = (input.move.y != 0) ? v.y + input.move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
-        v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
-
-        player.velocity = v;
-
-        player.hookState.Update(player, input);
-
-        //TRACKING
-        player.movingLastFrame = (input.move.x != 0 || input.move.y != 0);
-        player.hookBackLastFrame = input.directHookBack;
-        player.lastMoveAngle = player.moveAngle;
     }
 }
 
@@ -75,7 +53,10 @@ public class NoControlState : PlayerState
     }
     public override void Update(LiveEntity entity)
     {
-
+        base.Update(entity);
+        PlayerInput input = new PlayerInput();
+        input.GetInput();
+        ((Player)entity).hookState.Update((Player)entity, input);
     }
 }
 
@@ -97,6 +78,28 @@ public class ActiveState : InControlState
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
+        Player player = (Player)entity;
+        //INPUTS
+        PlayerInput input = new PlayerInput();
+        input.GetInput();
+        float speedMod = (input.move.x != 0 && input.move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
+        float appliedSpeed = speedMod * player.moveSpeed;
+
+        //MOVEMENT
+        Vector2 v = entity.velocity;
+        v.x = (input.move.x != 0) ? v.x + input.move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
+        v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
+        v.y = (input.move.y != 0) ? v.y + input.move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
+        v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
+
+        player.velocity = v;
+
+        player.hookState.Update(player, input);
+
+        //TRACKING
+        player.movingLastFrame = (input.move.x != 0 || input.move.y != 0);
+        player.hookBackLastFrame = input.directHookBack;
+        player.lastMoveAngle = player.moveAngle;
     }
 }
 

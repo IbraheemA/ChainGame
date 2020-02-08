@@ -48,23 +48,12 @@ namespace Entities
         public bool invincible { get; protected set; }
         public Vector2 velocity;
         protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
-        protected Task launchTask;
-        protected CancellationTokenSource launchTaskTokenSource;
-        protected moveStates moveState;
         protected float aggroRadius;
         protected float attackRadius;
 
-        public enum moveStates
-        {
-            active,
-            stunned,
-            stationary,
-            launched
-        }
 
         public LiveEntity()
         {
-            moveState = moveStates.stationary;
         }
 
         public void TakeDamage(float damageAmount)
@@ -77,9 +66,10 @@ namespace Entities
             }
         }
 
-        public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float invincibilityDuration, float launchDuration)
+        public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float launchDuration, float invincibilityDuration)
         {
             velocity = knockback/mass;
+            Debug.Log(velocity);
             invincibilityTimer = invincibilityDuration;
             if (launchDuration > 0)
             {
@@ -115,71 +105,5 @@ namespace Entities
             velocity = vectorToTarget.normalized * moveSpeed;
             LookAt(target);
         }
-
-        /*protected void StepSeek(Entity target, float aggroRadius)
-        {
-            //ChaseDecision(target, aggroRadius);
-            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            switch (moveState)
-            {
-                case moveStates.stunned:
-                    velocity *= 0.4f;
-                    break;
-                case moveStates.stationary:
-                    velocity = Vector2.zero;
-                    if (decisionTimer <= 0)
-                    {
-                        decisionTimer = decisionTimerMax;
-                        velocity = vectorToTarget.normalized * moveSpeed;
-                        LookAt(target);
-                        moveState = moveStates.active;
-                    }
-                    break;
-                case moveStates.active:
-                    if (decisionTimer <= 0)
-                    {
-                        decisionTimer = decisionTimerMax;
-                        velocity = vectorToTarget.normalized * moveSpeed;
-                        LookAt(target);
-                        moveState = moveStates.active;
-                        //Debug.Log(velocity);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public void StepSeek(Vector3 target, float aggroRadius)
-        {
-            Vector2 vectorToTarget = (target - attachedObject.transform.position);
-            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
-            switch (moveState)
-            {
-                case moveStates.stunned:
-                    velocity *= 0.4f;
-                    break;
-                case moveStates.stationary:
-                    velocity = Vector2.zero;
-                    if (decisionTimer <= 0)
-                    {
-                        decisionTimer = decisionTimerMax;
-                        velocity = vectorToTarget.normalized * moveSpeed;
-                        moveState = moveStates.active;
-                    }
-                    break;
-                case moveStates.active:
-                    if (decisionTimer <= 0)
-                    {
-                        decisionTimer = decisionTimerMax;
-                        velocity = vectorToTarget.normalized * moveSpeed;
-                        moveState = moveStates.active;
-                        //Debug.Log(velocity);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }*/
     }
 }

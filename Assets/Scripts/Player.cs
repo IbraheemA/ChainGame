@@ -10,6 +10,7 @@ namespace Entities
         public float hookKnockback = 80;
         public float hookMass = 10;
 
+
         public float shootSpeed = 0;
         public Vector2 hookVelocity;
         public float initialAngle = 0;
@@ -26,10 +27,6 @@ namespace Entities
         public bool movingLastFrame = false;
         public bool hookBackLastFrame = false;
 
-        public enum hState
-        {
-            fired, loading, loaded
-        }
         public GameObject anchor;
         public GameObject hook;
 
@@ -39,12 +36,17 @@ namespace Entities
             objectScript = attachedObject.GetComponent<PlayerObject>();
             objectScript.linkedScript = this;
             attachedObject.GetComponent<Identifier>().linkedScript = this;
+            StatesList.Add("active", typeof(ActiveState));
+            StatesList.Add("launched", typeof(LaunchedState));
+            StatesList.Add("stunned", typeof(StunnedState));
 
-            state = new ActiveState();
+            state = (State)Activator.CreateInstance(StatesList["active"]);
 
             //TODO: DO THIS BETTER LATER 1 (cont on "2")
             targets.Add(typeof(Grunt));
             targets.Add(typeof(Chaser));
+
+            mass = 10;
 
             anchor = attachedObject.transform.GetChild(0).gameObject;
             hook = anchor.transform.GetChild(0).gameObject;

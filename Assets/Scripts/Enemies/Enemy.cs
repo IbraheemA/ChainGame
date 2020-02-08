@@ -7,7 +7,6 @@ namespace Entities
     {
         public Enemy()
         {
-            moveState = moveStates.stationary;
         }
 
         protected override void Death()
@@ -44,6 +43,6 @@ namespace Entities
             }
         }
 
-        protected abstract void Attack();
+        protected abstract void Attack(Entity target);
     }
 }

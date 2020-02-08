@@ -36,7 +36,7 @@ namespace Entities
             base.Update();
         }
 
-        protected override void Attack()
+        protected override void Attack(Entity target)
         {
 
         }
