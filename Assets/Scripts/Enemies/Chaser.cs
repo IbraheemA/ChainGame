@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,11 +7,18 @@ namespace Entities
 {
     public class Chaser : Enemy
     {
+        private ChaserObject objectScript;
         public Chaser(Vector2 position)
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/ChaserObject"), position, Quaternion.identity);
-            objectScript = attachedObject.GetComponent<EnemyObject>();
+            objectScript = attachedObject.GetComponent<ChaserObject>();
             objectScript.linkedScript = this;
+            attachedObject.GetComponent<Identifier>().linkedScript = this;
+            StatesList.Add("active", typeof(ChaserActiveState));
+            StatesList.Add("launched", typeof(LaunchedState));
+            StatesList.Add("stunned", typeof(StunnedState));
+
+            state = (State)Activator.CreateInstance(StatesList["active"]);
 
             //BEHAVIOUR VALUES
             mass = 5;
@@ -26,8 +34,11 @@ namespace Entities
         public override void Update()
         {
             base.Update();
-            StandardSeek(Director.player);
-            attachedObject.transform.Translate(attachedObject.transform.InverseTransformDirection(velocity) * Time.deltaTime);
+        }
+
+        protected override void Attack()
+        {
+
         }
     }
 }

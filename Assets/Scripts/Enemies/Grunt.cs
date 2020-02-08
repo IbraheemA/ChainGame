@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,12 +7,18 @@ namespace Entities
 {
     public class Grunt : Enemy
     {
-        private float aggroRadius, attackRadius;
+        private GruntObject objectScript;
         public Grunt(Vector2 position)
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/EnemyObject"), position, Quaternion.identity);
-            objectScript = attachedObject.GetComponent<EnemyObject>();
+            objectScript = attachedObject.GetComponent<GruntObject>();
             objectScript.linkedScript = this;
+            attachedObject.GetComponent<Identifier>().linkedScript = this;
+            StatesList.Add("active", typeof(GruntActiveState));
+            StatesList.Add("launched", typeof(LaunchedState));
+            StatesList.Add("stunned", typeof(StunnedState));
+
+            state = (State)Activator.CreateInstance(StatesList["active"]);
 
             //BEHAVIOUR VALUES
             mass = 10;
@@ -29,16 +36,10 @@ namespace Entities
         public override void Update()
         {
             base.Update();
-            if ((attachedObject.transform.position - Director.player.attachedObject.transform.position).magnitude < attackRadius)
-            {
-                LookAt(Director.player);
-            }
-            else
-            {
-                //ChaseDecision(Director.player, aggroRadius);
-                StepSeek(Director.player, aggroRadius);
-                attachedObject.transform.Translate(attachedObject.transform.InverseTransformDirection(velocity) * Time.deltaTime);
-            }
+        }
+        protected override void Attack()
+        {
+            objectScript.Attack();
         }
     }
 }

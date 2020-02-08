@@ -7,7 +7,6 @@ namespace Entities
     {
         //DECLARING VARIABLES
         private PlayerObject objectScript;
-        private float hookDamage = 5;
         private float hookKnockback = 80;
         private float hookMass = 10;
 
@@ -40,18 +39,27 @@ namespace Entities
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/PlayerObject"), new Vector2(position.x, position.y), Quaternion.identity);
             objectScript = attachedObject.GetComponent<PlayerObject>();
             objectScript.linkedScript = this;
+            attachedObject.GetComponent<Identifier>().linkedScript = this;
+
+            state = new ActiveState();
+
+            //TODO: DO THIS BETTER LATER 1
+            targets.Add(typeof(Grunt));
+            targets.Add(typeof(Chaser));
 
             anchor = attachedObject.transform.GetChild(0).gameObject;
             hook = anchor.transform.GetChild(0).gameObject;
             hookSize = hook.GetComponent<CircleCollider2D>().radius;
             moveSpeed = 20;
+            damage = 5;
+            health = 40;
         }
 
         private void processHit(LiveEntity target, RaycastHit2D collision)
         {
             if (!target.invincible)
             {
-                target.TakeDamage(hookDamage);
+                target.TakeDamage(damage);
                 Transform t = target.attachedObject.transform;
                 Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed)*hookVelocity.normalized).normalized/2 * hookKnockback * hookMass;
                 //Vector2 knockback = collision.normal * -hookKnockback;
@@ -63,10 +71,16 @@ namespace Entities
         {
             foreach (RaycastHit2D i in col)
             {
-                if (i.transform.gameObject.tag == "Enemy")
+                if (null != i.transform.gameObject.GetComponent<Identifier>())
                 {
-                    processHit(i.transform.gameObject.GetComponent<EnemyObject>().linkedScript, i);
-                }
+                    LiveEntity target = i.transform.gameObject.GetComponent<Identifier>().linkedScript;
+
+                    //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE)
+                    if (targets.Contains(target.GetType()))
+                    {
+                        processHit(target, i);
+                    }
+                };
             }
         }
 
@@ -79,6 +93,7 @@ namespace Entities
             move.y = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
             bool directHookBack = Input.GetKey("q");
             bool lockHookRotation = Input.GetKey("w");
+            //bool lockHookRotation = Input.GetKey("w");
             float speedMod = (move.x != 0 && move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
             float appliedSpeed = speedMod * moveSpeed;
 
@@ -92,19 +107,16 @@ namespace Entities
             velocity = v;
 
             Vector2 currentPos = hook.transform.position;
-            attachedObject.transform.Translate(velocity * Time.deltaTime);
+            //attachedObject.transform.Translate(velocity * Time.deltaTime);
 
-            if (moveState != LiveEntity.moveStates.stunned)
+            if (move.x != 0 || move.y != 0)
             {
-                if (move.x != 0 || move.y != 0)
-                {
-                    moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * move.x, 10 * move.y));
-                    moveState = LiveEntity.moveStates.active;
-                }
-                else
-                {
-                    moveState = LiveEntity.moveStates.stationary;
-                }
+                moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * move.x, 10 * move.y));
+                moveState = LiveEntity.moveStates.active;
+            }
+            else
+            {
+                moveState = LiveEntity.moveStates.stationary;
             }
 
             lastHookAngle = hookAngle;
@@ -136,6 +148,7 @@ namespace Entities
                 rotateTarget = Mathf.LerpAngle(initialAngle, targetAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
                 anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
             }
+
 
             //HOOK PROPULSION
             if (hook.transform.localPosition.x == 0.2f && hookState == hState.fired)

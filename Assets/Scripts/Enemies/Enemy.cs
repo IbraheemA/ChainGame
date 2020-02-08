@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace Entities
 {
-    public class Enemy : LiveEntity
+    public abstract class Enemy : LiveEntity
     {
-        protected EnemyObject objectScript;
-
         public Enemy()
         {
             moveState = moveStates.stationary;
@@ -21,5 +19,31 @@ namespace Entities
         {
             base.Update();
         }
+
+        public void parseCollisionData(RaycastHit2D[] col)
+        {
+            foreach (RaycastHit2D i in col)
+            {
+                LiveEntity target = i.transform.gameObject.GetComponent<Identifier>().linkedScript;
+                if (targets.Contains(target.GetType()))
+                {
+                    processHit(target, i);
+                }
+            }
+        }
+
+        private void processHit(LiveEntity target, RaycastHit2D collision)
+        {
+            if (!target.invincible)
+            {
+                target.TakeDamage(damage);
+                //Transform t = target.attachedObject.transform;
+                //Vector2 knockback = Vector2.down * Quaternion.EulerAngles(attachedObject.transform.rotation);
+                //Vector2 knockback = collision.normal * -hookKnockback;
+                //target.ApplyKnockback(knockback, 0.2f, 0.2f, 0.05f);
+            }
+        }
+
+        protected abstract void Attack();
     }
 }
