@@ -15,8 +15,8 @@ namespace Entities
             objectScript.linkedScript = this;
             attachedObject.GetComponent<Identifier>().linkedScript = this;
             StatesList.Add("active", typeof(ChaserActiveState));
-            StatesList.Add("launched", typeof(LaunchedState));
-            StatesList.Add("stunned", typeof(StunnedState));
+            StatesList.Add("launched", typeof(EnemyLaunchedState));
+            StatesList.Add("stunned", typeof(EnemyStunnedState));
 
             state = (State)Activator.CreateInstance(StatesList["active"]);
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Entities;
 
-public class GruntActiveState : ActiveState
+public class GruntActiveState : EnemyActiveState
 {
     public override void MakeDecision(LiveEntity entity)
     {
@@ -25,8 +25,41 @@ public class GruntActiveState : ActiveState
     }
 }
 
+public class GruntAttackingState : EnemyActiveState
+{
+    private float timer;
+    public override void MakeDecision(LiveEntity entity)
+    {
+
+    }
+
+    public override void Enter(LiveEntity entity)
+    {
+        timer = 1;
+        entity.velocity = Vector2.zero;
+    }
+    public override void Exit(LiveEntity entity)
+    {
+
+    }
+    public override void Update(LiveEntity entity)
+    {
+        base.Update(entity);
+        if(timer <= 0)
+        {
+            Exit(entity);
+            entity.state = new GruntActiveState();
+            entity.state.Enter(entity);
+        }
+        else
+        {
+            timer -= Time.deltaTime;
+        }
+    }
+}
+
 /*
-public class GruntLaunchedState : LaunchedState
+public class GruntLaunchedState : EnemyLaunchedState
 {
     public GruntLaunchedState(float timer, float hitStunTimer) : base(timer, hitStunTimer)
     {
@@ -46,7 +79,7 @@ public class GruntLaunchedState : LaunchedState
     }
 }
 
-public class GruntStunnedState : StunnedState
+public class GruntStunnedState : EnemyStunnedState
 {
     public GruntStunnedState(float timer) : base(timer)
 

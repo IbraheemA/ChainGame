@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Entities;
 
-public class ChaserActiveState : ActiveState
+public class ChaserActiveState : EnemyActiveState
 {
     public override void MakeDecision(LiveEntity entity)
     {
@@ -25,7 +25,7 @@ public class ChaserActiveState : ActiveState
     }
 }
 
-/*public class ChaserLaunchedState : LaunchedState
+/*public class ChaserLaunchedState : EnemyLaunchedState
 {
     public ChaserLaunchedState(float timer, float hitStunTimer) : base(timer, hitStunTimer)
     {
@@ -45,7 +45,7 @@ public class ChaserActiveState : ActiveState
     }
 }
 
-public class ChaserStunnedState : StunnedState
+public class ChaserStunnedState : EnemyStunnedState
 {
     public ChaserStunnedState(float timer) : base(timer)
 

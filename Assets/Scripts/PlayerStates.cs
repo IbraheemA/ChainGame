@@ -4,20 +4,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class State
+public abstract class PlayerState : State
 {
-    public abstract void Enter(LiveEntity entity);
-    public abstract void Exit(LiveEntity entity);
-    public abstract void Update(LiveEntity entity);
-    public abstract void MakeDecision(LiveEntity entity);
+
 }
 
-public abstract class EnemyState : State
-{
-    //public abstract void Update(LiveEntity entity);
-}
-
-public class EnemyInControlState : EnemyState
+public class InControlState : PlayerState
 {
     public bool inControl = true;
     public override void Enter(LiveEntity entity)
@@ -40,7 +32,7 @@ public class EnemyInControlState : EnemyState
     }
 }
 
-public class EnemyNoControlState : EnemyState
+public class NoControlState : PlayerState
 {
     public bool inControl = false;
     public override void Enter(LiveEntity entity)
@@ -63,7 +55,7 @@ public class EnemyNoControlState : EnemyState
     }
 }
 
-public class EnemyActiveState : EnemyInControlState
+public class ActiveState : InControlState
 {
     public override void MakeDecision(LiveEntity entity)
     {
@@ -84,11 +76,11 @@ public class EnemyActiveState : EnemyInControlState
     }
 }
 
-public class EnemyLaunchedState : EnemyNoControlState
+public class LaunchedState : NoControlState
 {
     protected float timer, hitStunTimer;
 
-    public EnemyLaunchedState(float timer, float hitStunTimer)
+    public LaunchedState(float timer, float hitStunTimer)
     {
         this.timer = timer;
         this.hitStunTimer = hitStunTimer;
@@ -99,7 +91,7 @@ public class EnemyLaunchedState : EnemyNoControlState
     }
     public override void Exit(LiveEntity entity)
     {
-        entity.state = new EnemyStunnedState(hitStunTimer);
+        entity.state = new StunnedState(hitStunTimer);
         entity.state.Enter(entity);
     }
     public override void Update(LiveEntity entity)
@@ -116,11 +108,11 @@ public class EnemyLaunchedState : EnemyNoControlState
     }
 }
 
-public class EnemyStunnedState : EnemyNoControlState
+public class StunnedState : NoControlState
 {
     protected float timer;
 
-    public EnemyStunnedState(float timer)
+    public StunnedState(float timer)
     {
         this.timer = timer;
     }

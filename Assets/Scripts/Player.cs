@@ -7,32 +7,31 @@ namespace Entities
     {
         //DECLARING VARIABLES
         private PlayerObject objectScript;
-        private float hookKnockback = 80;
-        private float hookMass = 10;
+        public float hookKnockback = 80;
+        public float hookMass = 10;
 
-        private float shootSpeed = 0;
+        public float shootSpeed = 0;
         public Vector2 hookVelocity;
-        private float initialAngle = 0;
-        private float targetAngle = 0;
-        private float rotateTarget = 0;
-        private float rotationPercentage;
-        private float hookSize;
-        private float moveAngle = 0;
-        private float hookAngle = 0;
-        private float lastHookAngle = 0;
-        private float lastMoveAngle;
-        private float loadTimer = 0;
-        public hState hookState { get; private set; }
+        public float initialAngle = 0;
+        public float targetAngle = 0;
+        public float rotateTarget = 0;
+        public float rotationPercentage;
+        public float hookSize;
+        public float moveAngle = 0;
+        public float hookAngle = 0;
+        public float lastHookAngle = 0;
+        public float lastMoveAngle;
+        public HookState hookState = new HookLoadedState();
 
-        private bool movingLastFrame = false;
-        private bool hookBackLastFrame = false;
+        public bool movingLastFrame = false;
+        public bool hookBackLastFrame = false;
 
         public enum hState
         {
             fired, loading, loaded
         }
-        private GameObject anchor;
-        private GameObject hook;
+        public GameObject anchor;
+        public GameObject hook;
 
         public Player(Vector2 position)
         {
@@ -43,7 +42,7 @@ namespace Entities
 
             state = new ActiveState();
 
-            //TODO: DO THIS BETTER LATER 1
+            //TODO: DO THIS BETTER LATER 1 (cont on "2")
             targets.Add(typeof(Grunt));
             targets.Add(typeof(Chaser));
 
@@ -55,18 +54,6 @@ namespace Entities
             health = 40;
         }
 
-        private void processHit(LiveEntity target, RaycastHit2D collision)
-        {
-            if (!target.invincible)
-            {
-                target.TakeDamage(damage);
-                Transform t = target.attachedObject.transform;
-                Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed)*hookVelocity.normalized).normalized/2 * hookKnockback * hookMass;
-                //Vector2 knockback = collision.normal * -hookKnockback;
-                target.ApplyKnockback(knockback, 0.2f, 0.2f, 0.05f);
-            }
-        }
-
         public void parseHookCollisionData(RaycastHit2D[] col)
         {
             foreach (RaycastHit2D i in col)
@@ -75,10 +62,10 @@ namespace Entities
                 {
                     LiveEntity target = i.transform.gameObject.GetComponent<Identifier>().linkedScript;
 
-                    //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE)
+                    //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE with getsubclass or something)
                     if (targets.Contains(target.GetType()))
                     {
-                        processHit(target, i);
+                        hookState.ProcessHit(this, target, i);
                     }
                 };
             }
@@ -88,121 +75,26 @@ namespace Entities
         {
             base.Update();
             //INPUTS
-            Vector2 move = Vector2.zero;
-            move.x = (Input.GetKey("right") ? 1 : 0) - (Input.GetKey("left") ? 1 : 0);
-            move.y = (Input.GetKey("up") ? 1 : 0) - (Input.GetKey("down") ? 1 : 0);
-            bool directHookBack = Input.GetKey("q");
-            bool lockHookRotation = Input.GetKey("w");
-            //bool lockHookRotation = Input.GetKey("w");
-            float speedMod = (move.x != 0 && move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
+            PlayerInput input = new PlayerInput();
+            input.GetInput();
+            float speedMod = (input.move.x != 0 && input.move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
             float appliedSpeed = speedMod * moveSpeed;
 
             //MOVEMENT
             Vector2 v = velocity;
-            v.x = (move.x != 0) ? v.x + move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
+            v.x = (input.move.x != 0) ? v.x + input.move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
             v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
-            v.y = (move.y != 0) ? v.y + move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
+            v.y = (input.move.y != 0) ? v.y + input.move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
             v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
 
             velocity = v;
 
-            Vector2 currentPos = hook.transform.position;
-            //attachedObject.transform.Translate(velocity * Time.deltaTime);
-
-            if (move.x != 0 || move.y != 0)
-            {
-                moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * move.x, 10 * move.y));
-                moveState = LiveEntity.moveStates.active;
-            }
-            else
-            {
-                moveState = LiveEntity.moveStates.stationary;
-            }
-
-            lastHookAngle = hookAngle;
-            hookAngle = moveAngle - (directHookBack ? Mathf.Sign(moveAngle) * 180 : 0);
-
-            //HOOK ROTATION
-            float eulersZ = anchor.transform.localRotation.eulerAngles.z;
-            //TODO: understand this better
-            float diff = (hookAngle - eulersZ + 180) % 360 - 180;
-            diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
-
-            if (hookAngle != lastHookAngle)
-            {
-                if (!movingLastFrame && hookBackLastFrame == directHookBack)
-                {
-                    moveAngle = lastMoveAngle;
-                    hookAngle = lastHookAngle;
-                }
-                else
-                {
-                    initialAngle = eulersZ;
-                    targetAngle = hookAngle;
-                    rotationPercentage = 0;
-                }
-            }
-            if (!lockHookRotation)
-            {
-                rotationPercentage = Mathf.Min(1, rotationPercentage + Time.deltaTime / 0.4f);
-                rotateTarget = Mathf.LerpAngle(initialAngle, targetAngle, 1 - Mathf.Pow((rotationPercentage - 1), 2));
-                anchor.transform.localRotation = Quaternion.Euler(0, 0, rotateTarget);
-            }
-
-
-            //HOOK PROPULSION
-            if (hook.transform.localPosition.x == 0.2f && hookState == hState.fired)
-            {
-                hookState = hState.loading;
-                loadTimer = 0.1f;
-            }
-
-            if (hookState == hState.loaded)
-            {
-                shootSpeed = 0;
-                if (Input.GetKey("space"))
-                {
-                    shootSpeed = 9;
-                    hookState = hState.fired;
-                }
-            }
-            else
-            {
-                shootSpeed -= 60 * Time.deltaTime * (!Input.GetKey("space") ? 1 : 0.35f);
-            }
-
-            if (hookState == hState.loading && (loadTimer <= 0 || !Input.GetKey("space")))
-            {
-                hookState = hState.loaded;
-            }
-            else
-            {
-                loadTimer -= Time.deltaTime;
-            }
-
-            Transform ht = hook.transform;
-            Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
-            hookVelocity = nextPos - currentPos;
-            if (hookState == hState.fired)
-            {
-                parseHookCollisionData(Physics2D.CircleCastAll(currentPos, hookSize, hookVelocity, shootSpeed * Time.deltaTime));
-            }
-            ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+            hookState.Update(this, input);
 
             //TRACKING
-            movingLastFrame = (moveState == LiveEntity.moveStates.active);
-            hookBackLastFrame = directHookBack;
+            movingLastFrame = (input.move.x != 0 || input.move.y != 0);
+            hookBackLastFrame = input.directHookBack;
             lastMoveAngle = moveAngle;
-
-            //GRAPHICS
-            if (lockHookRotation)
-            {
-                hook.transform.GetChild(0).gameObject.SetActive(true);
-            }
-            else
-            {
-                hook.transform.GetChild(0).gameObject.SetActive(false);
-            }
         }
 
         protected override void Death()

@@ -9,7 +9,7 @@ namespace Entities
     public abstract class Entity
     {
         public GameObject attachedObject;
-        public State state;// = new ActiveState();
+        public State state;// = new EnemyActiveState();
 
         public Entity()
         {
@@ -107,27 +107,6 @@ namespace Entities
         public void LookAt(Entity target)
         {
             attachedObject.transform.rotation = Quaternion.LookRotation(Vector3.forward, attachedObject.transform.position - target.attachedObject.transform.position);
-        }
-
-        public void ChaseDecision(Entity target)
-        {
-            GameObject ao = attachedObject;
-            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
-            if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
-            {
-                LookAt(target);
-                decisionTimer = 1;//the 1 here is the attack timer
-                
-            }
-            else
-            {
-                if (decisionTimer <= 0)
-                {
-                    StandardSeek(target);
-                    decisionTimer = decisionTimerMax;
-                }
-            }
         }
 
         public void StandardSeek(Entity target)

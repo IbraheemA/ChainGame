@@ -15,8 +15,8 @@ namespace Entities
             objectScript.linkedScript = this;
             attachedObject.GetComponent<Identifier>().linkedScript = this;
             StatesList.Add("active", typeof(GruntActiveState));
-            StatesList.Add("launched", typeof(LaunchedState));
-            StatesList.Add("stunned", typeof(StunnedState));
+            StatesList.Add("launched", typeof(EnemyLaunchedState));
+            StatesList.Add("stunned", typeof(EnemyStunnedState));
 
             state = (State)Activator.CreateInstance(StatesList["active"]);
 
@@ -50,7 +50,8 @@ namespace Entities
             if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
             {
                 LookAt(target);
-                decisionTimer = 1;//the 1 here is the attack timer
+                state = new GruntAttackingState();
+                state.Enter(this);
 
             }
             else
