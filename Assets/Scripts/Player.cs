@@ -74,27 +74,6 @@ namespace Entities
         public override void Update()
         {
             base.Update();
-            //INPUTS
-            PlayerInput input = new PlayerInput();
-            input.GetInput();
-            float speedMod = (input.move.x != 0 && input.move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
-            float appliedSpeed = speedMod * moveSpeed;
-
-            //MOVEMENT
-            Vector2 v = velocity;
-            v.x = (input.move.x != 0) ? v.x + input.move.x * 1.5f : Mathf.Sign(v.x) * Mathf.Max(0, Mathf.Abs(v.x) - 60 * Time.deltaTime);
-            v.x = Mathf.Clamp(v.x, -appliedSpeed, appliedSpeed);
-            v.y = (input.move.y != 0) ? v.y + input.move.y * 1.5f : Mathf.Sign(v.y) * Mathf.Max(0, Mathf.Abs(v.y) - 60 * Time.deltaTime);
-            v.y = Mathf.Clamp(v.y, -appliedSpeed, appliedSpeed);
-
-            velocity = v;
-
-            hookState.Update(this, input);
-
-            //TRACKING
-            movingLastFrame = (input.move.x != 0 || input.move.y != 0);
-            hookBackLastFrame = input.directHookBack;
-            lastMoveAngle = moveAngle;
         }
 
         protected override void Death()
