@@ -20,9 +20,8 @@ public class GruntActiveState : ActiveState
     }
     public override void Update(LiveEntity entity)
     {
-        GameObject ao = entity.attachedObject;
         base.Update(entity);
-        entity.ChaseDecision(Director.player);
+        ((Grunt)entity).ChaseDecision(Director.player);
     }
 }
 

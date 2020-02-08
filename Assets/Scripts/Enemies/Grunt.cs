@@ -41,5 +41,26 @@ namespace Entities
         {
             objectScript.Attack();
         }
+
+        public void ChaseDecision(Entity target)
+        {
+            GameObject ao = attachedObject;
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
+            if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
+            {
+                LookAt(target);
+                decisionTimer = 1;//the 1 here is the attack timer
+
+            }
+            else
+            {
+                if (decisionTimer <= 0)
+                {
+                    StandardSeek(target);
+                    decisionTimer = decisionTimerMax;
+                }
+            }
+        }
     }
 }

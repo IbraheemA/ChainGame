@@ -111,22 +111,26 @@ namespace Entities
 
         public void ChaseDecision(Entity target)
         {
-            GameObject ao = this.attachedObject;
+            GameObject ao = attachedObject;
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
             decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
-            if ((ao.transform.position - Director.player.attachedObject.transform.position).magnitude < attackRadius)
+            if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
             {
-                LookAt(Director.player);
-                decisionTimer = 1;
-
+                LookAt(target);
+                decisionTimer = 1;//the 1 here is the attack timer
+                
             }
             else
             {
-                StandardSeek(Director.player);
+                if (decisionTimer <= 0)
+                {
+                    StandardSeek(target);
+                    decisionTimer = decisionTimerMax;
+                }
             }
         }
 
-        protected void StandardSeek(Entity target)
+        public void StandardSeek(Entity target)
         {
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
             velocity = vectorToTarget.normalized * moveSpeed;

@@ -20,9 +20,8 @@ public class ChaserActiveState : ActiveState
     }
     public override void Update(LiveEntity entity)
     {
-        GameObject ao = entity.attachedObject;
         base.Update(entity);
-        //entity.StandardSeek(Director.player);
+        entity.StandardSeek(Director.player);
     }
 }
 
