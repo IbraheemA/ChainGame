@@ -41,16 +41,12 @@ namespace Entities
         public List<Type> targets = new List<Type>();
         public Dictionary<string, Type> StatesList = new Dictionary<string, Type>();
 
-        protected float decisionTimerMax;
-        protected float decisionTimer = 0;
+        public float decisionTimerMax;
         protected float mass;
 
         public bool invincible { get; protected set; }
         public Vector2 velocity;
-        protected float invincibilityTimer = 0, hitStunTimer = 0, launchTimer = 0;
-        protected float aggroRadius;
-        protected float attackRadius;
-
+        protected float invincibilityTimer = 0;
 
         public LiveEntity()
         {
@@ -69,15 +65,16 @@ namespace Entities
         public void ApplyKnockback(Vector2 knockback, float hitStunDuration, float launchDuration, float invincibilityDuration)
         {
             velocity = knockback/mass;
-            Debug.Log(velocity);
             invincibilityTimer = invincibilityDuration;
             if (launchDuration > 0)
             {
+                state.Exit(this);
                 state = (State)Activator.CreateInstance(StatesList["launched"], launchDuration, hitStunDuration);
                 state.Enter(this);
             }
             else
             {
+                state.Exit(this);
                 state = (State)Activator.CreateInstance(StatesList["stunned"], hitStunDuration);
                 state.Enter(this);
             }

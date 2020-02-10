@@ -23,7 +23,6 @@ namespace Entities
             //BEHAVIOUR VALUES
             mass = 10;
             decisionTimerMax = 1.5f;
-            decisionTimer = 0;
             aggroRadius = 15;
             attackRadius = 3;
 
@@ -37,30 +36,37 @@ namespace Entities
         {
             base.Update();
         }
-        protected override void Attack(Entity target)
+
+        public override void Attack(LiveEntity target)
         {
             LookAt(target);
-            state = new GruntAttackingState();
+            state.Exit(this);
+            state = new GruntAttackingState(target);
             state.Enter(this);
         }
 
-        public void ChaseDecision(Entity target)
+        public override bool ProcessHit(LiveEntity target, GameObject hitBox)
         {
-            GameObject ao = attachedObject;
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            decisionTimer -= Time.deltaTime * Mathf.Max(1, aggroRadius / (vectorToTarget.magnitude));
-            if ((ao.transform.position - target.attachedObject.transform.position).magnitude < attackRadius)
+            if (!target.invincible && hitBox.GetComponent<Collider2D>().IsTouching(target.attachedObject.GetComponent<Collider2D>()))
             {
-                Attack(target);
+                target.ApplyKnockback(vectorToTarget.normalized * 400, 0.05f, 0.02f, 0.2f);
+                return true;
             }
             else
             {
-                if (decisionTimer <= 0)
-                {
-                    StandardSeek(target);
-                    decisionTimer = decisionTimerMax;
-                }
+                return false;
             }
+            /*Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            if (!target.invincible && vectorToTarget.magnitude <= attackRadius)
+            {
+                target.ApplyKnockback(vectorToTarget.normalized * 400, 0.05f, 0.02f, 0.2f);
+                return true;
+            }
+            else
+            {
+                return false;
+            }*/
         }
     }
 }

@@ -23,7 +23,6 @@ namespace Entities
             //BEHAVIOUR VALUES
             mass = 5;
             decisionTimerMax = 1.5f;
-            decisionTimer = 0;
 
             //STATS
             maxHealth = 8;
@@ -36,7 +35,7 @@ namespace Entities
             base.Update();
         }
 
-        protected override void Attack(Entity target)
+        public override void Attack(LiveEntity target)
         {
 
         }

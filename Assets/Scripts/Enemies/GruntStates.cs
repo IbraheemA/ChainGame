@@ -5,6 +5,7 @@ using Entities;
 
 public class GruntActiveState : EnemyActiveState
 {
+    private float decisionTimer;
     public override void MakeDecision(LiveEntity entity)
     {
 
@@ -12,7 +13,7 @@ public class GruntActiveState : EnemyActiveState
 
     public override void Enter(LiveEntity entity)
     {
-
+        decisionTimer = 0;
     }
     public override void Exit(LiveEntity entity)
     {
@@ -20,14 +21,39 @@ public class GruntActiveState : EnemyActiveState
     }
     public override void Update(LiveEntity entity)
     {
-        base.Update(entity);
-        ((Grunt)entity).ChaseDecision(Director.player);
+        Grunt grunt = (Grunt)entity;
+        base.Update(grunt);
+        GameObject ao = grunt.attachedObject;
+        LiveEntity target = Director.player;
+        Vector2 vectorToTarget = (target.attachedObject.transform.position - ao.transform.position);
+        decisionTimer -= Time.deltaTime * Mathf.Max(1, grunt.aggroRadius / (vectorToTarget.magnitude));
+        if ((ao.transform.position - target.attachedObject.transform.position).magnitude < grunt.attackRadius)
+        {
+            grunt.Attack(target);
+        }
+        else
+        {
+            if (decisionTimer <= 0)
+            {
+                grunt.StandardSeek(target);
+                decisionTimer = entity.decisionTimerMax;
+            }
+        }
     }
 }
 
 public class GruntAttackingState : EnemyActiveState
 {
-    private float timer;
+    //private float timer;
+    private int frame;
+    private LiveEntity target;
+    private bool successfulHit;
+    private GameObject hitBox;
+
+    public GruntAttackingState(LiveEntity target)
+    {
+        this.target = target;
+    }
     public override void MakeDecision(LiveEntity entity)
     {
 
@@ -35,69 +61,34 @@ public class GruntAttackingState : EnemyActiveState
 
     public override void Enter(LiveEntity entity)
     {
-        timer = 1;
+        //timer = 1;
+        successfulHit = false;
+        frame = 60;
         entity.velocity = Vector2.zero;
-        //VERY PLACEHOLDER TEST FOR ATTACKING; DO BETTER LATER
-        Director.player.ApplyKnockback((Director.player.attachedObject.transform.position - entity.attachedObject.transform.position).normalized*400, 0.05f, 0.02f, 0.2f);
+        hitBox = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/ConeHitBox"), entity.attachedObject.transform);
     }
     public override void Exit(LiveEntity entity)
     {
-
+        Object.Destroy(hitBox);
     }
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
-        if(timer <= 0)
+        if(frame <= 0)
         {
             Exit(entity);
             entity.state = new GruntActiveState();
             entity.state.Enter(entity);
         }
-        else
+        else if(frame >= 15 && frame <= 30)
         {
-            timer -= Time.deltaTime;
+            if (!successfulHit)
+            {
+                successfulHit = ((Grunt)entity).ProcessHit(target, hitBox);
+            }
         }
+
+        //timer -= Time.deltaTime;
+        frame--;
     }
 }
-
-/*
-public class GruntLaunchedState : EnemyLaunchedState
-{
-    public GruntLaunchedState(float timer, float hitStunTimer) : base(timer, hitStunTimer)
-    {
-    }
-    public override void Enter(LiveEntity entity)
-    {
-
-    }
-    public override void Exit(LiveEntity entity)
-    {
-        entity.state = new GruntStunnedState(hitStunTimer);
-        entity.state.Enter(entity);
-    }
-    public override void Update(LiveEntity entity)
-    {
-        base.Update(entity);
-    }
-}
-
-public class GruntStunnedState : EnemyStunnedState
-{
-    public GruntStunnedState(float timer) : base(timer)
-
-    {
-    }
-    public override void Enter(LiveEntity entity)
-    {
-
-    }
-    public override void Exit(LiveEntity entity)
-    {
-        entity.state = new GruntActiveState();
-        entity.state.Enter(entity);
-    }
-    public override void Update(LiveEntity entity)
-    {
-        base.Update(entity);
-    }
-}*/
