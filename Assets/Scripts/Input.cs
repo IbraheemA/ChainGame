@@ -2,7 +2,7 @@
 
 public class PlayerInput
 {
-    public bool directHookBack, lockHookRotation, lockHookPropulsion;
+    public bool directHookBack, lockHookRotation, lockHookPropulsion, firing;
     public Vector2 move;
 
     public void GetInput()
@@ -13,5 +13,6 @@ public class PlayerInput
         directHookBack = Input.GetKey("q");
         lockHookRotation = Input.GetKey("w");
         lockHookPropulsion = Input.GetKey("e");
+        firing = Input.GetKey("space");
     }
 }

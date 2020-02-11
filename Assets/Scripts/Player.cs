@@ -31,6 +31,7 @@ namespace Entities
 
         public GameObject anchor;
         public GameObject hook;
+        public List<GameObject> hookNodes = new List<GameObject>();
 
         public Player(Vector2 position) : base()
         {
@@ -52,8 +53,17 @@ namespace Entities
 
             mass = 10;
 
+            //VERY VERY PLACEHOLDER OBJECT FINDING
             anchor = attachedObject.transform.GetChild(0).gameObject;
             hook = anchor.transform.GetChild(0).gameObject;
+            hookNodes.Add(anchor.transform.GetChild(1).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(2).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(3).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(4).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(5).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(6).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(7).gameObject);
+
             hookSize = hook.GetComponent<CircleCollider2D>().radius;
             Stats["moveSpeed"] = 20;
             Stats["damage"] = 5;

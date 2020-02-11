@@ -69,7 +69,7 @@ public class HookLoadedState : HookState
     public override void Update(Player player, PlayerInput input)
     {
         base.Update(player, input);
-        if (Input.GetKey("space") && !input.lockHookPropulsion)
+        if (input.firing && !input.lockHookPropulsion)
         {
             Exit(player);
             player.hookStatesList.Add(new HookFiredState());
@@ -111,7 +111,7 @@ public class HookFiredState : HookState
             }
             else
             {
-                shootSpeed -= 60 * Time.deltaTime * (!Input.GetKey("space") ? 1 : 0.35f);
+                shootSpeed -= 60 * Time.deltaTime * (input.firing ? 0.35f : 1);
             }
 
             Transform ht = player.hook.transform;
@@ -120,6 +120,14 @@ public class HookFiredState : HookState
             player.hookVelocity = nextPos - currentPos;
             player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, player.hookSize, player.hookVelocity, shootSpeed * Time.deltaTime));
             ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+            int count = player.hookNodes.Count;
+            for (int i = 0; i < count; i++)
+            {
+                //Debug.Log(ht.localPosition.x);
+                //float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i) / (float)count);
+                float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.33f);
+                player.hookNodes[i].transform.localPosition = new Vector2(pos, 0);
+            }
         }
     }
 
