@@ -7,7 +7,7 @@ namespace Entities
     {
         public float aggroRadius;
         public float attackRadius;
-        public Enemy()
+        public Enemy() : base()
         {
         }
 

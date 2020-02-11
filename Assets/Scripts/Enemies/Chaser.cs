@@ -23,11 +23,13 @@ namespace Entities
             //BEHAVIOUR VALUES
             mass = 5;
             decisionTimerMax = 1.5f;
+            attackRadius = 2.5f;
 
             //STATS
-            maxHealth = 8;
-            health = maxHealth;
-            moveSpeed = 15;
+            Stats["maxHealth"] = 8;
+            Stats["moveSpeed"] = 15;
+            Stats["damage"] = 3;
+            Stats["health"] = Stats["maxHealth"];
         }
 
         public override void Update()
@@ -35,9 +37,27 @@ namespace Entities
             base.Update();
         }
 
+        public override bool ProcessHit(LiveEntity target, GameObject hitBox)
+        {
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
+            if (!target.invincible && hitBox.GetComponent<Collider2D>().IsTouching(target.attachedObject.GetComponent<Collider2D>()))
+            {
+                target.ApplyKnockback(vectorToTarget.normalized * 600, 0.02f, 0.007f, 0.1f);
+                target.TakeDamage(Stats["damage"]);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public override void Attack(LiveEntity target)
         {
-
+            LookAt(target);
+            state.Exit(this);
+            state = new ChaserAttackingState(target);
+            state.Enter(this);
         }
     }
 }

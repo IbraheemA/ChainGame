@@ -8,7 +8,7 @@ namespace Entities
     public class Grunt : Enemy
     {
         private GruntObject objectScript;
-        public Grunt(Vector2 position)
+        public Grunt(Vector2 position) : base()
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/EnemyObject"), position, Quaternion.identity);
             objectScript = attachedObject.GetComponent<GruntObject>();
@@ -27,9 +27,10 @@ namespace Entities
             attackRadius = 3;
 
             //STATS
-            maxHealth = 20;
-            health = maxHealth;
-            moveSpeed = 10;
+            Stats["maxHealth"] = 20;
+            Stats["moveSpeed"] = 10;
+            Stats["health"] = Stats["maxHealth"];
+            Stats["damage"] = 8;
         }
 
         public override void Update()
@@ -51,22 +52,13 @@ namespace Entities
             if (!target.invincible && hitBox.GetComponent<Collider2D>().IsTouching(target.attachedObject.GetComponent<Collider2D>()))
             {
                 target.ApplyKnockback(vectorToTarget.normalized * 400, 0.05f, 0.02f, 0.2f);
+                target.TakeDamage(Stats["damage"]);
                 return true;
             }
             else
             {
                 return false;
             }
-            /*Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            if (!target.invincible && vectorToTarget.magnitude <= attackRadius)
-            {
-                target.ApplyKnockback(vectorToTarget.normalized * 400, 0.05f, 0.02f, 0.2f);
-                return true;
-            }
-            else
-            {
-                return false;
-            }*/
         }
     }
 }

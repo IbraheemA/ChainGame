@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public abstract class PlayerState : State
@@ -56,7 +57,7 @@ public class NoControlState : PlayerState
         base.Update(entity);
         PlayerInput input = new PlayerInput();
         input.GetInput();
-        ((Player)entity).hookState.Update((Player)entity, input);
+        ((Player)entity).hookStatesList.Last().Update((Player)entity, input);
     }
 }
 
@@ -83,7 +84,7 @@ public class ActiveState : InControlState
         PlayerInput input = new PlayerInput();
         input.GetInput();
         float speedMod = (input.move.x != 0 && input.move.y != 0) ? 1 / Mathf.Sqrt(2) : 1;
-        float appliedSpeed = speedMod * player.moveSpeed;
+        float appliedSpeed = speedMod * player.Stats["moveSpeed"];
 
         //MOVEMENT
         Vector2 v = entity.velocity;
@@ -94,7 +95,7 @@ public class ActiveState : InControlState
 
         player.velocity = v;
 
-        player.hookState.Update(player, input);
+        player.hookStatesList.Last().Update(player, input);
 
         //TRACKING
         player.movingLastFrame = (input.move.x != 0 || input.move.y != 0);

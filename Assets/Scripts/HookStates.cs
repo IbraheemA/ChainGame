@@ -1,4 +1,5 @@
 ﻿using Entities;
+using System.Linq;
 using UnityEngine;
 
 public abstract class HookState
@@ -63,16 +64,16 @@ public class HookLoadedState : HookState
     }
     public override void Exit(Player player)
     {
-
+        player.hookStatesList.Remove(this);
     }
     public override void Update(Player player, PlayerInput input)
     {
         base.Update(player, input);
-        if (Input.GetKey("space"))
+        if (Input.GetKey("space") && !input.lockHookPropulsion)
         {
             Exit(player);
-            player.hookState = new HookFiredState();
-            player.hookState.Enter(player);
+            player.hookStatesList.Add(new HookFiredState());
+            player.hookStatesList.Last().Enter(player);
         }
     }
     public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
@@ -90,40 +91,80 @@ public class HookFiredState : HookState
     }
     public override void Exit(Player player)
     {
-
+        player.hookStatesList.Remove(this);
     }
     public override void Update(Player player, PlayerInput input)
     {
         base.Update(player, input);
-        if (player.hook.transform.localPosition.x == 0.2f && shootSpeed < 0)
+        if (input.lockHookPropulsion)
         {
-            Exit(player);
-            player.hookState = new HookLoadingState();
-            player.hookState.Enter(player);
+            player.hookStatesList.Add(new HookHeldState());
+            player.hookStatesList.Last().Enter(player);
         }
         else
         {
-            shootSpeed -= 60 * Time.deltaTime * (!Input.GetKey("space") ? 1 : 0.35f);
-        }
+            if (player.hook.transform.localPosition.x == 0.2f && shootSpeed < 0)
+            {
+                Exit(player);
+                player.hookStatesList.Add(new HookLoadingState());
+                player.hookStatesList.Last().Enter(player);
+            }
+            else
+            {
+                shootSpeed -= 60 * Time.deltaTime * (!Input.GetKey("space") ? 1 : 0.35f);
+            }
 
-        Transform ht = player.hook.transform;
-        Vector2 currentPos = ht.position;
-        Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
-        player.hookVelocity = nextPos - currentPos;
-        player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, player.hookSize, player.hookVelocity, shootSpeed * Time.deltaTime));
-        ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+            Transform ht = player.hook.transform;
+            Vector2 currentPos = ht.position;
+            Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
+            player.hookVelocity = nextPos - currentPos;
+            player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, player.hookSize, player.hookVelocity, shootSpeed * Time.deltaTime));
+            ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+        }
     }
 
     public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
     {
         if (!target.invincible)
         {
-            target.TakeDamage(player.damage);
+            target.TakeDamage(player.Stats["damage"]);
             Transform t = target.attachedObject.transform;
             Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
         }
+    }
+}
+
+public class HookHeldState : HookState
+{
+    public override void Enter(Player player)
+    {
+    }
+    public override void Exit(Player player)
+    {
+        player.hookStatesList.Remove(this);
+    }
+    public override void Update(Player player, PlayerInput input)
+    {
+        base.Update(player, input);
+        if (!input.lockHookPropulsion)
+        {
+            Exit(player);
+        }
+    }
+
+    public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
+    {
+        //DO CHAIN COLLISIONS AND NOT BALL COLLISIONS
+        /*if (!target.invincible)
+        {
+            target.TakeDamage(player.Stats["damage"]);
+            Transform t = target.attachedObject.transform;
+            Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
+            //Vector2 knockback = collision.normal * -hookKnockback;
+            target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
+        }*/
     }
 }
 
@@ -136,7 +177,7 @@ public class HookLoadingState : HookState
     }
     public override void Exit(Player player)
     {
-
+        player.hookStatesList.Remove(this);
     }
     public override void Update(Player player, PlayerInput input)
     {
@@ -144,8 +185,8 @@ public class HookLoadingState : HookState
         if (timer <= 0)
         {
             Exit(player);
-            player.hookState = new HookLoadedState();
-            player.hookState.Enter(player);
+            player.hookStatesList.Add(new HookLoadedState());
+            player.hookStatesList.Last().Enter(player);
         }
         else
         {

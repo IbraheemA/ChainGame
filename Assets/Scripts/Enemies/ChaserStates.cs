@@ -21,47 +21,68 @@ public class ChaserActiveState : EnemyActiveState
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
-        entity.StandardSeek(Director.player);
+        Chaser chaser = (Chaser)entity;
+        LiveEntity target = Director.player;
+        if (Director.playerIsAlive)
+        {
+            if ((chaser.attachedObject.transform.position - target.attachedObject.transform.position).magnitude < chaser.attackRadius)
+            {
+                chaser.Attack(target);
+            }
+            else
+            {
+                entity.StandardSeek(target);
+            }
+        }
     }
 }
 
-/*public class ChaserLaunchedState : EnemyLaunchedState
+public class ChaserAttackingState : EnemyActiveState
 {
-    public ChaserLaunchedState(float timer, float hitStunTimer) : base(timer, hitStunTimer)
+    //private float timer;
+    private int frame;
+    private LiveEntity target;
+    private bool successfulHit;
+    private GameObject hitBox;
+
+    public ChaserAttackingState(LiveEntity target)
     {
+        this.target = target;
     }
-    public override void Enter(LiveEntity entity)
+    public override void MakeDecision(LiveEntity entity)
     {
 
     }
+
+    public override void Enter(LiveEntity entity)
+    {
+        successfulHit = false;
+        frame = 30;
+        entity.velocity = Vector2.zero;
+        hitBox = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/ChaserAttackHitbox"), entity.attachedObject.transform);
+    }
     public override void Exit(LiveEntity entity)
     {
-        entity.state = new ChaserStunnedState(hitStunTimer);
-        entity.state.Enter(entity);
+        Object.Destroy(hitBox);
     }
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
+        if (frame <= 0)
+        {
+            Exit(entity);
+            entity.state = new ChaserActiveState();
+            entity.state.Enter(entity);
+        }
+        else if (frame >= 5 && frame <= 20)
+        {
+            if (!successfulHit && Director.playerIsAlive)
+            {
+                successfulHit = ((Chaser)entity).ProcessHit(target, hitBox);
+            }
+        }
+
+        //timer -= Time.deltaTime;
+        frame--;
     }
 }
-
-public class ChaserStunnedState : EnemyStunnedState
-{
-    public ChaserStunnedState(float timer) : base(timer)
-
-    {
-    }
-    public override void Enter(LiveEntity entity)
-    {
-
-    }
-    public override void Exit(LiveEntity entity)
-    {
-        entity.state = new ChaserActiveState();
-        entity.state.Enter(entity);
-    }
-    public override void Update(LiveEntity entity)
-    {
-        base.Update(entity);
-    }
-}*/

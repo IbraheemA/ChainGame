@@ -34,12 +34,9 @@ namespace Entities
     public abstract class LiveEntity : Entity
     {
         //Dictionary<string, float> stats = new Dictionary<string, float>();
-        public float maxHealth { get; protected set; }
-        public float health { get; protected set; }
-        public float moveSpeed { get; protected set; }
-        public float damage { get; protected set; }
         public List<Type> targets = new List<Type>();
         public Dictionary<string, Type> StatesList = new Dictionary<string, Type>();
+        public Dictionary<string, float> Stats { get; protected set;  }  = new Dictionary<string, float>();
 
         public float decisionTimerMax;
         protected float mass;
@@ -50,13 +47,17 @@ namespace Entities
 
         public LiveEntity()
         {
+            Stats.Add("maxHealth", float.NaN);
+            Stats.Add("health", float.NaN);
+            Stats.Add("moveSpeed", float.NaN);
+            Stats.Add("damage", float.NaN);
         }
 
         public void TakeDamage(float damageAmount)
         {
             //Debug.Log("Taking damage: " + damageAmount);
-            health -= damageAmount;
-            if (health <= 0)
+            Stats["health"] = Stats["health"] - damageAmount;
+            if (Stats["health"] <= 0)
             {
                 Death();
             }
@@ -99,7 +100,7 @@ namespace Entities
         public void StandardSeek(Entity target)
         {
             Vector2 vectorToTarget = (target.attachedObject.transform.position - attachedObject.transform.position);
-            velocity = vectorToTarget.normalized * moveSpeed;
+            velocity = vectorToTarget.normalized * Stats["moveSpeed"];
             LookAt(target);
         }
     }

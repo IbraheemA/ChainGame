@@ -5,6 +5,7 @@ using Entities;
 public class Director : MonoBehaviour {
 
     public static Player player;
+    public static bool playerIsAlive = true;
     public static Director self;
     private float spawnTimerMax = 3f;
     private float spawnTimer = 0;
@@ -57,4 +58,6 @@ public class Director : MonoBehaviour {
         }
         return toSpawn;
     }
+
+
 }

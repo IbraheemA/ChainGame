@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Entities
@@ -22,7 +24,7 @@ namespace Entities
         public float hookAngle = 0;
         public float lastHookAngle = 0;
         public float lastMoveAngle;
-        public HookState hookState = new HookLoadedState();
+        public List<HookState> hookStatesList = new List<HookState>();
 
         public bool movingLastFrame = false;
         public bool hookBackLastFrame = false;
@@ -30,7 +32,7 @@ namespace Entities
         public GameObject anchor;
         public GameObject hook;
 
-        public Player(Vector2 position)
+        public Player(Vector2 position) : base()
         {
             attachedObject = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/PlayerObject"), new Vector2(position.x, position.y), Quaternion.identity);
             objectScript = attachedObject.GetComponent<PlayerObject>();
@@ -39,6 +41,8 @@ namespace Entities
             StatesList.Add("active", typeof(ActiveState));
             StatesList.Add("launched", typeof(LaunchedState));
             StatesList.Add("stunned", typeof(StunnedState));
+
+            hookStatesList.Add(new HookLoadedState());
 
             state = (State)Activator.CreateInstance(StatesList["active"]);
 
@@ -51,9 +55,9 @@ namespace Entities
             anchor = attachedObject.transform.GetChild(0).gameObject;
             hook = anchor.transform.GetChild(0).gameObject;
             hookSize = hook.GetComponent<CircleCollider2D>().radius;
-            moveSpeed = 20;
-            damage = 5;
-            health = 40;
+            Stats["moveSpeed"] = 20;
+            Stats["damage"] = 5;
+            Stats["health"] = 30;
         }
 
         public void parseHookCollisionData(RaycastHit2D[] col)
@@ -67,7 +71,7 @@ namespace Entities
                     //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE with getsubclass or something)
                     if (targets.Contains(target.GetType()))
                     {
-                        hookState.ProcessHit(this, target, i);
+                        hookStatesList.Last().ProcessHit(this, target, i);
                     }
                 };
             }
@@ -81,6 +85,8 @@ namespace Entities
         protected override void Death()
         {
             Debug.Log("Player died!");
+            UnityEngine.Object.Destroy(attachedObject);
+            Director.playerIsAlive = false;
         }
     }
 }

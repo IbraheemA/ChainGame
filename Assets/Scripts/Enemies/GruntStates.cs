@@ -24,19 +24,22 @@ public class GruntActiveState : EnemyActiveState
         Grunt grunt = (Grunt)entity;
         base.Update(grunt);
         GameObject ao = grunt.attachedObject;
-        LiveEntity target = Director.player;
-        Vector2 vectorToTarget = (target.attachedObject.transform.position - ao.transform.position);
-        decisionTimer -= Time.deltaTime * Mathf.Max(1, grunt.aggroRadius / (vectorToTarget.magnitude));
-        if ((ao.transform.position - target.attachedObject.transform.position).magnitude < grunt.attackRadius)
+        if (Director.playerIsAlive)
         {
-            grunt.Attack(target);
-        }
-        else
-        {
-            if (decisionTimer <= 0)
+            LiveEntity target = Director.player;
+            Vector2 vectorToTarget = (target.attachedObject.transform.position - ao.transform.position);
+            decisionTimer -= Time.deltaTime * Mathf.Max(1, grunt.aggroRadius / (vectorToTarget.magnitude));
+            if ((ao.transform.position - target.attachedObject.transform.position).magnitude < grunt.attackRadius)
             {
-                grunt.StandardSeek(target);
-                decisionTimer = entity.decisionTimerMax;
+                grunt.Attack(target);
+            }
+            else
+            {
+                if (decisionTimer <= 0)
+                {
+                    grunt.StandardSeek(target);
+                    decisionTimer = entity.decisionTimerMax;
+                }
             }
         }
     }
@@ -82,7 +85,7 @@ public class GruntAttackingState : EnemyActiveState
         }
         else if(frame >= 15 && frame <= 30)
         {
-            if (!successfulHit)
+            if (!successfulHit && Director.playerIsAlive)
             {
                 successfulHit = ((Grunt)entity).ProcessHit(target, hitBox);
             }
