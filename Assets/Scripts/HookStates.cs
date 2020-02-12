@@ -1,4 +1,6 @@
 ﻿using Entities;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -6,6 +8,11 @@ public abstract class HookState
 {
     public virtual void Update(Player player, PlayerInput input)
     {
+        player.currentPos = player.hook.transform.position;
+        for(int i = 0; i < player.hookNodes.Count; i++)
+        {
+            player.currentNodePositions[i] = player.hookNodes[i].transform.position;
+        }
         if (input.move.x != 0 || input.move.y != 0)
         {
             player.moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * input.move.x, 10 * input.move.y));
@@ -42,18 +49,13 @@ public abstract class HookState
         }
 
         //GRAPHICS
-        if (input.lockHookRotation)
-        {
-            player.hook.transform.GetChild(0).gameObject.SetActive(true);
-        }
-        else
-        {
-            player.hook.transform.GetChild(0).gameObject.SetActive(false);
-        }
+        player.hookSource.transform.GetChild(0).gameObject.SetActive(input.lockHookRotation);
+        player.hook.transform.GetChild(0).gameObject.SetActive(input.lockHookPropulsion);
     }
     public abstract void Enter(Player player);
     public abstract void Exit(Player player);
-    public abstract void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision);
+    public abstract void ProcessHookHit(Player player, LiveEntity target, RaycastHit2D collision);
+    public abstract void ProcessNodeHit(Player player, LiveEntity target, RaycastHit2D collision);
 }
 
 public class HookLoadedState : HookState
@@ -76,9 +78,14 @@ public class HookLoadedState : HookState
             player.hookStatesList.Last().Enter(player);
         }
     }
-    public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
+    public override void ProcessHookHit(Player player, LiveEntity target, RaycastHit2D collision)
     {
-        
+
+    }
+
+    public override void ProcessNodeHit(Player player, LiveEntity target, RaycastHit2D collision)
+    {
+
     }
 }
 
@@ -115,23 +122,27 @@ public class HookFiredState : HookState
             }
 
             Transform ht = player.hook.transform;
-            Vector2 currentPos = ht.position;
-            Vector2 nextPos = ht.TransformPoint(new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0));
-            player.hookVelocity = nextPos - currentPos;
-            player.parseHookCollisionData(Physics2D.CircleCastAll(currentPos, player.hookSize, player.hookVelocity, shootSpeed * Time.deltaTime));
             ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
+            Vector2 nextPos = (Vector2)ht.position + (player.velocity * Time.deltaTime);
+            player.hookVelocity = nextPos - player.currentPos;
+            player.parseHookCollisionData(Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
             int count = player.hookNodes.Count;
             for (int i = 0; i < count; i++)
             {
-                //Debug.Log(ht.localPosition.x);
-                //float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i) / (float)count);
-                float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.33f);
-                player.hookNodes[i].transform.localPosition = new Vector2(pos, 0);
+                Transform htn = player.hookNodes[i].transform;
+                Vector2 currentPosI = player.currentNodePositions[i];
+                float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i + 1) / (float)count);
+                htn.localPosition = new Vector2(pos, 0);
+                Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
+                Vector2 nodeVelocity = nextPosI - currentPosI;
+                player.parseHookCollisionData(Physics2D.CircleCastAll(currentPosI, player.hookSize*0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
+                //float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.22f);
+
             }
         }
     }
 
-    public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
+    public override void ProcessHookHit(Player player, LiveEntity target, RaycastHit2D collision)
     {
         if (!target.invincible)
         {
@@ -140,6 +151,18 @@ public class HookFiredState : HookState
             Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
+        }
+    }
+
+    public override void ProcessNodeHit(Player player, LiveEntity target, RaycastHit2D collision)
+    {
+        if (!target.invincible)
+        {
+            target.TakeDamage(player.Stats["damage"]/2);
+            Transform t = target.attachedObject.transform;
+            Vector2 knockback = (-collision.normal).normalized / 2 * player.hookKnockback * player.hookMass;
+            //Vector2 knockback = collision.normal * -hookKnockback;
+            target.ApplyKnockback(knockback, 0.15f, 0.03f, 0.1f);
         }
     }
 }
@@ -160,19 +183,46 @@ public class HookHeldState : HookState
         {
             Exit(player);
         }
+        Transform ht = player.hook.transform;
+        player.hookVelocity = player.velocity * Time.deltaTime;
+        player.parseHookCollisionData(Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
+        int count = player.hookNodes.Count;
+        for (int i = 0; i < count; i++)
+        {
+            Transform htn = player.hookNodes[i].transform;
+            Vector2 currentPosI = player.currentNodePositions[i];
+            float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i + 1) / (float)count);
+            htn.localPosition = new Vector2(pos, 0);
+            Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
+            Vector2 nodeVelocity = nextPosI - currentPosI;
+            player.parseHookCollisionData(Physics2D.CircleCastAll(currentPosI, player.hookSize * 0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
+            //float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.22f);
+
+        }
     }
 
-    public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
+    public override void ProcessHookHit(Player player, LiveEntity target, RaycastHit2D collision)
     {
-        //DO CHAIN COLLISIONS AND NOT BALL COLLISIONS
-        /*if (!target.invincible)
+        if (!target.invincible)
         {
             target.TakeDamage(player.Stats["damage"]);
             Transform t = target.attachedObject.transform;
-            Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
+            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
-        }*/
+        }
+    }
+
+    public override void ProcessNodeHit(Player player, LiveEntity target, RaycastHit2D collision)
+    {
+        if (!target.invincible)
+        {
+            target.TakeDamage(player.Stats["damage"] / 2);
+            Transform t = target.attachedObject.transform;
+            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * player.hookMass;
+            //Vector2 knockback = collision.normal * -hookKnockback;
+            target.ApplyKnockback(knockback, 0.15f, 0.03f, 0.1f);
+        }
     }
 }
 
@@ -201,7 +251,12 @@ public class HookLoadingState : HookState
             timer -= Time.deltaTime;
         }
     }
-    public override void ProcessHit(Player player, LiveEntity target, RaycastHit2D collision)
+    public override void ProcessHookHit(Player player, LiveEntity target, RaycastHit2D collision)
+    {
+
+    }
+
+    public override void ProcessNodeHit(Player player, LiveEntity target, RaycastHit2D collision)
     {
 
     }
