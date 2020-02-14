@@ -47,8 +47,7 @@ public class GruntActiveState : EnemyActiveState
 
 public class GruntAttackingState : EnemyActiveState
 {
-    //private float timer;
-    private int frame;
+    private float timer;
     private LiveEntity target;
     private bool successfulHit;
     private GameObject hitBox;
@@ -64,9 +63,8 @@ public class GruntAttackingState : EnemyActiveState
 
     public override void Enter(LiveEntity entity)
     {
-        //timer = 1;
+        timer = 1;
         successfulHit = false;
-        frame = 60;
         entity.velocity = Vector2.zero;
         hitBox = GameObject.Instantiate((GameObject)Resources.Load("Prefabs/ConeHitBox"), entity.attachedObject.transform);
     }
@@ -77,13 +75,13 @@ public class GruntAttackingState : EnemyActiveState
     public override void Update(LiveEntity entity)
     {
         base.Update(entity);
-        if(frame <= 0)
+        if(timer <= 0)
         {
             Exit(entity);
             entity.state = new GruntActiveState();
             entity.state.Enter(entity);
         }
-        else if(frame >= 15 && frame <= 30)
+        else if(timer >= 0.25f && timer <= 0.5f)
         {
             if (!successfulHit && Director.playerIsAlive)
             {
@@ -91,7 +89,6 @@ public class GruntAttackingState : EnemyActiveState
             }
         }
 
-        //timer -= Time.deltaTime;
-        frame--;
+        timer -= Time.deltaTime;
     }
 }

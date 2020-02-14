@@ -16,7 +16,9 @@ namespace Entities
         public float hookMass = 10;
 
 
-        public float shootSpeed = 0;
+        //public float shootSpeed = 0;
+        public float hookHeldTimerMax = 1;
+        public float hookHeldTimer = 1;
         public Vector2 hookVelocity, currentPos;
         public float initialAngle = 0;
         public float targetAngle = 0;

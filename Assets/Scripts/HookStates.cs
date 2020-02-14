@@ -8,11 +8,13 @@ public abstract class HookState
 {
     public virtual void Update(Player player, PlayerInput input)
     {
+        player.hookHeldTimer = Mathf.Min(player.hookHeldTimer + Time.deltaTime, player.hookHeldTimerMax);
         player.currentPos = player.hook.transform.position;
         for (int i = 0; i < player.hookNodes.Count; i++)
         {
             player.currentNodePositions[i] = player.hookNodes[i].transform.position;
         }
+
         if (input.move.x != 0 || input.move.y != 0)
         {
             player.moveAngle = Vector2.SignedAngle(Vector2.right, new Vector2(10 * input.move.x, 10 * input.move.y));
@@ -24,8 +26,6 @@ public abstract class HookState
         //HOOK ROTATION
         float eulersZ = player.anchor.transform.localRotation.eulerAngles.z;
         //TODO: understand this better
-        float diff = (player.hookAngle - eulersZ + 180) % 360 - 180;
-        diff = Mathf.Abs(diff < -180 ? diff + 360 : diff);
 
         if (player.hookAngle != player.lastHookAngle)
         {
@@ -155,8 +155,9 @@ public class HookFiredState : HookState
     public override void Update(Player player, PlayerInput input)
     {
         base.Update(player, input);
-        if (input.lockHookPropulsion)
+        if (input.lockHookPropulsion && player.hookHeldTimer == player.hookHeldTimerMax)
         {
+            shootSpeed = 0;
             player.hookStatesList.Add(new HookHeldState());
             player.hookStatesList.Last().Enter(player);
         }
@@ -221,8 +222,10 @@ public class HookFiredState : HookState
 
 public class HookHeldState : HookState
 {
+    //private float timer;
     public override void Enter(Player player)
     {
+        
     }
     public override void Exit(Player player)
     {
@@ -231,26 +234,26 @@ public class HookHeldState : HookState
     public override void Update(Player player, PlayerInput input)
     {
         base.Update(player, input);
-        if (!input.lockHookPropulsion)
+        if (!input.lockHookPropulsion || player.hookHeldTimer <= 0)
         {
             Exit(player);
         }
-        Transform ht = player.hook.transform;
-        Vector2 nextPos = (Vector2)ht.position + (player.velocity * Time.deltaTime);
-        player.hookVelocity = nextPos - player.currentPos;
-        ParseHookCollisionData(player, Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
-        int count = player.hookNodes.Count;
-        for (int i = 0; i < count; i++)
-        {
-            Transform htn = player.hookNodes[i].transform;
-            Vector2 currentPosI = player.currentNodePositions[i];
-            //float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i) / (float)count);
-            //htn.localPosition = new Vector2(pos, 0);
-            Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
-            Vector2 nodeVelocity = nextPosI - currentPosI;
-            ParseHookCollisionData(player, Physics2D.CircleCastAll(currentPosI, player.hookSize * 0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
-            //float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.22f);
+        else {
+            player.hookHeldTimer -= 2*Time.deltaTime;
+            Transform ht = player.hook.transform;
+            Vector2 nextPos = (Vector2)ht.position + (player.velocity * Time.deltaTime);
+            player.hookVelocity = nextPos - player.currentPos;
+            ParseHookCollisionData(player, Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
+            int count = player.hookNodes.Count;
+            for (int i = 0; i < count; i++)
+            {
+                Transform htn = player.hookNodes[i].transform;
+                Vector2 currentPosI = player.currentNodePositions[i];
+                Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
+                Vector2 nodeVelocity = nextPosI - currentPosI;
+                ParseHookCollisionData(player, Physics2D.CircleCastAll(currentPosI, player.hookSize * 0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
 
+            }
         }
     }
 

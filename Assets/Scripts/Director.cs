@@ -9,12 +9,13 @@ public class Director : MonoBehaviour {
     public static Director self;
     private float spawnTimerMax = 3f;
     private float spawnTimer = 0;
-    public GameObject playerHealthbar;
+    public GameObject playerHealthbar, lockChargeBar;
 
 	void Awake () {
         self = this;
         playerHealthbar = GameObject.Find("Healthbar");
-	}
+        lockChargeBar = GameObject.Find("LockChargeBar");
+    }
 
     void Start()
     {
@@ -25,7 +26,8 @@ public class Director : MonoBehaviour {
     void Update()
     {
         playerHealthbar.transform.localScale = new Vector3(Mathf.Max(0, player.Stats["health"] / player.Stats["maxHealth"]), playerHealthbar.transform.localScale.y, playerHealthbar.transform.localScale.z);
-        if(spawnTimer <= 0)
+        lockChargeBar.transform.localScale = new Vector3(Mathf.Max(0, player.hookHeldTimer / player.hookHeldTimerMax), playerHealthbar.transform.localScale.y, playerHealthbar.transform.localScale.z);
+        if (spawnTimer <= 0)
         {
             //MAKE THIS PICK VALID SPAWN POINTS (EDGES OF SCREEN AND NOT ON PLAYER)
             List<string> names = new List<string> { "Grunt", "Chaser" };
