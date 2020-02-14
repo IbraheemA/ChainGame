@@ -9,7 +9,7 @@ public abstract class HookState
     public virtual void Update(Player player, PlayerInput input)
     {
         player.currentPos = player.hook.transform.position;
-        for(int i = 0; i < player.hookNodes.Count; i++)
+        for (int i = 0; i < player.hookNodes.Count; i++)
         {
             player.currentNodePositions[i] = player.hookNodes[i].transform.position;
         }
@@ -51,6 +51,58 @@ public abstract class HookState
         //GRAPHICS
         player.hookSource.transform.GetChild(0).gameObject.SetActive(input.lockHookRotation);
         player.hook.transform.GetChild(0).gameObject.SetActive(input.lockHookPropulsion);
+    }
+    public virtual void AltUpdate(Player player, PlayerInput input)
+    {
+        player.currentPos = player.hook.transform.position;
+        for (int i = 0; i < player.hookNodes.Count; i++)
+        {
+            player.currentNodePositions[i] = player.hookNodes[i].transform.position;
+        }
+        player.lastHookAngle = player.hookAngle;
+        if (input.hookVector.x != 0 || input.hookVector.y != 0)
+        {
+            player.hookAngle = Vector2.SignedAngle(Vector2.right, new Vector2(input.hookVector.x, input.hookVector.y));
+        }
+
+        //HOOK ROTATION
+        float eulersZ = player.anchor.transform.localRotation.eulerAngles.z;
+        //TODO: understand this better
+
+        if (player.hookAngle != player.lastHookAngle)
+        {
+            player.initialAngle = eulersZ;
+            player.targetAngle = player.hookAngle;
+            player.rotationPercentage = 0;
+        }
+
+        if (!input.lockHookRotation)
+        {
+            player.rotationPercentage = Mathf.Min(1, player.rotationPercentage + Time.deltaTime / 0.4f);
+            player.rotateTarget = Mathf.LerpAngle(player.initialAngle, player.targetAngle, 1 - Mathf.Pow((player.rotationPercentage - 1), 2));
+            player.anchor.transform.localRotation = Quaternion.Euler(0, 0, player.rotateTarget);
+        }
+
+        //GRAPHICS
+        player.hookSource.transform.GetChild(0).gameObject.SetActive(input.lockHookRotation);
+        player.hook.transform.GetChild(0).gameObject.SetActive(input.lockHookPropulsion);
+    }
+    public virtual void ParseHookCollisionData(Player player, RaycastHit2D[] col, List<Type> targets, HitProcessor action)
+    {
+        foreach (RaycastHit2D i in col)
+        {
+            if (null != i.transform.gameObject.GetComponent<Identifier>())
+            {
+                LiveEntity target = i.transform.gameObject.GetComponent<Identifier>().linkedScript;
+
+                //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE with getsubclass or something)
+                if (targets.Contains(target.GetType()))
+                {
+                    action(player, target, i);
+                    //hookStatesList.Last().ProcessHookHit(this, target, i);
+                }
+            };
+        }
     }
     public abstract void Enter(Player player);
     public abstract void Exit(Player player);
@@ -125,17 +177,17 @@ public class HookFiredState : HookState
             ht.localPosition = new Vector2(Mathf.Max(ht.localPosition.x + shootSpeed * Time.deltaTime, 0.2f), 0);
             Vector2 nextPos = (Vector2)ht.position + (player.velocity * Time.deltaTime);
             player.hookVelocity = nextPos - player.currentPos;
-            player.parseHookCollisionData(Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
+            ParseHookCollisionData(player, Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
             int count = player.hookNodes.Count;
             for (int i = 0; i < count; i++)
             {
                 Transform htn = player.hookNodes[i].transform;
                 Vector2 currentPosI = player.currentNodePositions[i];
-                float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i + 1) / (float)count);
+                float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i) / (float)count);
                 htn.localPosition = new Vector2(pos, 0);
                 Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
                 Vector2 nodeVelocity = nextPosI - currentPosI;
-                player.parseHookCollisionData(Physics2D.CircleCastAll(currentPosI, player.hookSize*0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
+                ParseHookCollisionData(player, Physics2D.CircleCastAll(currentPosI, player.hookSize*0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
                 //float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.22f);
 
             }
@@ -148,7 +200,7 @@ public class HookFiredState : HookState
         {
             target.TakeDamage(player.Stats["damage"]);
             Transform t = target.attachedObject.transform;
-            Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * player.hookMass;
+            Vector2 knockback = (-collision.normal + Mathf.Sign(shootSpeed) * player.hookVelocity.normalized).normalized / 2 * player.hookKnockback * Mathf.Clamp(player.hookVelocity.magnitude, 1, 2) * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
         }
@@ -160,7 +212,7 @@ public class HookFiredState : HookState
         {
             target.TakeDamage(player.Stats["damage"]/2);
             Transform t = target.attachedObject.transform;
-            Vector2 knockback = (-collision.normal).normalized / 2 * player.hookKnockback * player.hookMass;
+            Vector2 knockback = (-collision.normal).normalized / 2 * player.hookKnockback * Mathf.Min(player.hookVelocity.magnitude, 2) * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.15f, 0.03f, 0.1f);
         }
@@ -184,18 +236,19 @@ public class HookHeldState : HookState
             Exit(player);
         }
         Transform ht = player.hook.transform;
-        player.hookVelocity = player.velocity * Time.deltaTime;
-        player.parseHookCollisionData(Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
+        Vector2 nextPos = (Vector2)ht.position + (player.velocity * Time.deltaTime);
+        player.hookVelocity = nextPos - player.currentPos;
+        ParseHookCollisionData(player, Physics2D.CircleCastAll(player.currentPos, player.hookSize, player.hookVelocity, player.hookVelocity.magnitude), player.targets, ProcessHookHit);
         int count = player.hookNodes.Count;
         for (int i = 0; i < count; i++)
         {
             Transform htn = player.hookNodes[i].transform;
             Vector2 currentPosI = player.currentNodePositions[i];
-            float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i + 1) / (float)count);
-            htn.localPosition = new Vector2(pos, 0);
+            //float pos = Mathf.Lerp(0.2f, ht.localPosition.x, ((float)i) / (float)count);
+            //htn.localPosition = new Vector2(pos, 0);
             Vector2 nextPosI = (Vector2)htn.position + (player.velocity * Time.deltaTime);
             Vector2 nodeVelocity = nextPosI - currentPosI;
-            player.parseHookCollisionData(Physics2D.CircleCastAll(currentPosI, player.hookSize * 0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
+            ParseHookCollisionData(player, Physics2D.CircleCastAll(currentPosI, player.hookSize * 0.8f, nodeVelocity, nodeVelocity.magnitude), player.targets, ProcessNodeHit);
             //float pos = Mathf.Max(0.2f, ht.localPosition.x - (float)i * 0.22f);
 
         }
@@ -207,7 +260,7 @@ public class HookHeldState : HookState
         {
             target.TakeDamage(player.Stats["damage"]);
             Transform t = target.attachedObject.transform;
-            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * player.hookMass;
+            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * Mathf.Min(player.hookVelocity.magnitude, 2) * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.2f, 0.05f, 0.2f);
         }
@@ -219,7 +272,7 @@ public class HookHeldState : HookState
         {
             target.TakeDamage(player.Stats["damage"] / 2);
             Transform t = target.attachedObject.transform;
-            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * player.hookMass;
+            Vector2 knockback = (-collision.normal + player.hookVelocity).normalized / 2 * player.hookKnockback * Mathf.Clamp(player.hookVelocity.magnitude, 1, 2) * player.hookMass;
             //Vector2 knockback = collision.normal * -hookKnockback;
             target.ApplyKnockback(knockback, 0.15f, 0.03f, 0.1f);
         }

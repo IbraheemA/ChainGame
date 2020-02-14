@@ -9,9 +9,11 @@ public class Director : MonoBehaviour {
     public static Director self;
     private float spawnTimerMax = 3f;
     private float spawnTimer = 0;
+    public GameObject playerHealthbar;
 
 	void Awake () {
         self = this;
+        playerHealthbar = GameObject.Find("Healthbar");
 	}
 
     void Start()
@@ -22,6 +24,7 @@ public class Director : MonoBehaviour {
 
     void Update()
     {
+        playerHealthbar.transform.localScale = new Vector3(Mathf.Max(0, player.Stats["health"] / player.Stats["maxHealth"]), playerHealthbar.transform.localScale.y, playerHealthbar.transform.localScale.z);
         if(spawnTimer <= 0)
         {
             //MAKE THIS PICK VALID SPAWN POINTS (EDGES OF SCREEN AND NOT ON PLAYER)

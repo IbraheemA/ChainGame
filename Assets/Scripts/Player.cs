@@ -68,6 +68,12 @@ namespace Entities
             hookNodes.Add(anchor.transform.GetChild(9).gameObject);
             hookNodes.Add(anchor.transform.GetChild(10).gameObject);
             hookNodes.Add(anchor.transform.GetChild(11).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(12).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(13).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(14).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(15).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(16).gameObject);
+            hookNodes.Add(anchor.transform.GetChild(17).gameObject);
 
             hookStatesList.Add(new HookLoadedState());
             foreach (GameObject i in hookNodes)
@@ -78,25 +84,8 @@ namespace Entities
             hookSize = hook.GetComponent<CircleCollider2D>().radius;
             Stats["moveSpeed"] = 20;
             Stats["damage"] = 5;
-            Stats["health"] = 30;
-        }
-
-        public void parseHookCollisionData(RaycastHit2D[] col, List<Type> targets, HitProcessor action)
-        {
-            foreach (RaycastHit2D i in col)
-            {
-                if (null != i.transform.gameObject.GetComponent<Identifier>())
-                {
-                    LiveEntity target = i.transform.gameObject.GetComponent<Identifier>().linkedScript;
-
-                    //TODO: DO THIS BETTER LATER 2 (REPLACE GETTYPE with getsubclass or something)
-                    if (targets.Contains(target.GetType()))
-                    {
-                        action(this, target, i);
-                        //hookStatesList.Last().ProcessHookHit(this, target, i);
-                    }
-                };
-            }
+            Stats["maxHealth"] = 30;
+            Stats["health"] = Stats["maxHealth"];
         }
 
         public override void Update()
